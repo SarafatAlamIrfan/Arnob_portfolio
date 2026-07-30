@@ -1,0 +1,83 @@
+[
+  {
+    "id": "ewurc-website",
+    "title": "EWU Robotics Club Website",
+    "category": "web",
+    "image": "image/featured_project/ewurc_website.png",
+    "link": "https://ewuroboticsclub.com/",
+    "linkLabel": "View Live",
+    "description": "The official website for East West University Robotics Club. Serving as the digital hub for workshop registrations, event showcases, and club achievements."
+  },
+  {
+    "id": "nrf26",
+    "title": "National Robo Fest 2026",
+    "category": "web",
+    "image": "image/featured_project/nrf26.png",
+    "link": "https://ewuroboticsclub.com/nrf26/",
+    "linkLabel": "View Live",
+    "description": "The official platform for NRF26. Developed and deployed to handle event logistics, sponsorship management, and participant registration."
+  },
+  {
+    "id": "cgpa-calc",
+    "title": "EWU CGPA Calculator",
+    "category": "web",
+    "image": "image/featured_project/ewucgcalculator.png",
+    "link": "https://ewucgcalculator.netlify.app/",
+    "linkLabel": "View Live",
+    "description": "A modern CGPA Calculator for students of EWU with advanced features, clean UI, and fast calculation logic."
+  },
+  {
+    "id": "taskhub",
+    "title": "Utsho-TaskHub",
+    "category": "web",
+    "image": "image/featured_project/TaskHub.png",
+    "link": "https://taskhub.utshoacademy.com/",
+    "linkLabel": "View Live",
+    "description": "Role-based project management system built with PHP, MySQL, and Tailwind CSS. Features smart due-date automation and analytics."
+  },
+  {
+    "id": "blood-donor-connect",
+    "title": "Blood Donor Connect",
+    "category": "app",
+    "image": "image/featured_project/blood_donor_connect_app.png",
+    "link": "https://github.com/SarafatAlamIrfan/Blood_Donors_Management",
+    "linkLabel": "Source Code",
+    "description": "A peer-to-peer mobile application designed to seamlessly connect blood donors and recipients. Features real-time requests, donor location mapping, and direct contact options."
+  },
+  {
+    "id": "library-system",
+    "title": "Library Management System",
+    "category": "app",
+    "image": "https://i.postimg.cc/Wp00BkG5/Gemini-Generated-Image-6i2j626i2j626i2j.png",
+    "link": "https://github.com/SarafatAlamIrfan/Library-Management-System-using-Java",
+    "linkLabel": "Source Code",
+    "description": "A comprehensive Library Management System engineered using core Java principles for inventory and tracking."
+  },
+  {
+    "id": "password-checker",
+    "title": "Password Strength Checker",
+    "category": "app",
+    "image": "https://i.postimg.cc/9MwX6Zs1/Gemini-Generated-Image-s6rgubs6rgubs6rg.png",
+    "link": "https://github.com/SarafatAlamIrfan/Password-Strength-Checker",
+    "linkLabel": "Source Code",
+    "description": "A utility application built in C++ that evaluates password complexity and provides security feedback."
+  },
+  {
+    "id": "restaurant-management",
+    "title": "Restaurant Management",
+    "category": "app",
+    "image": "https://i.postimg.cc/7hPPtdM8/Gemini-Generated-Image-velzzovelzzovelz.png",
+    "link": "https://github.com/SarafatAlamIrfan/Restaurant-Management-System-with-C-programming",
+    "linkLabel": "Source Code",
+    "description": "A CLI-based Restaurant Management System created with C Programming to handle orders and billing."
+  },
+  {
+    "id": "bcd-display",
+    "title": "BCD to 7-Segment Display",
+    "category": "hardware",
+    "image": "image/featured_project/bcd.png",
+    "link": "https://github.com/SarafatAlamIrfan/Binary-Coded-Decimal-BCD-to-7-Segment-Display-Driver-Circuit",
+    "linkLabel": "Source Code",
+    "description": "An Integrated Circuit (IC) based hardware project driving a 7-segment display using a BCD decoder."
+  }
+]

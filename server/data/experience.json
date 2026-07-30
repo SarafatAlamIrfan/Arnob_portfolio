@@ -1,0 +1,16 @@
+[
+  {
+    "id": "ex1",
+    "role": "Creative Lead & Designer",
+    "company": "Local Agency",
+    "timeline": "Jan 2025 - Present",
+    "details": "Directing layout design, producing visual materials, and managing customer-facing branding workflows."
+  },
+  {
+    "id": "ex2",
+    "role": "Project Coordinator",
+    "company": "Innovation Lab",
+    "timeline": "June 2024 - Dec 2024",
+    "details": "Coordinated multi-disciplinary teams working on hardware gadgets and software interfaces, ensuring timely project delivery."
+  }
+]

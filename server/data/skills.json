@@ -1,0 +1,58 @@
+[
+  {
+    "id": "s1",
+    "name": "User Interface Design",
+    "icon": "fas fa-pen-nib",
+    "color": "text-pink-500 dark:text-pink-400 group-hover:text-pink-600 dark:group-hover:text-pink-300",
+    "category": "technical"
+  },
+  {
+    "id": "s2",
+    "name": "HTML/CSS",
+    "icon": "fa-brands fa-html5",
+    "color": "text-orange-600 dark:text-orange-500 group-hover:text-orange-500 dark:group-hover:text-orange-400",
+    "category": "technical"
+  },
+  {
+    "id": "s3",
+    "name": "JavaScript (ES6)",
+    "icon": "fa-brands fa-js",
+    "color": "text-yellow-400 dark:text-yellow-300 group-hover:text-yellow-500 dark:group-hover:text-yellow-200",
+    "category": "technical"
+  },
+  {
+    "id": "s4",
+    "name": "Product Layouts",
+    "icon": "fa-solid fa-palette",
+    "color": "text-purple-500 dark:text-purple-400 group-hover:text-purple-600 dark:group-hover:text-purple-300",
+    "category": "technical"
+  },
+  {
+    "id": "s5",
+    "name": "Arduino Prototyping",
+    "icon": "fa-solid fa-microchip",
+    "color": "text-teal-500 dark:text-teal-400 group-hover:text-teal-600 dark:group-hover:text-teal-300",
+    "category": "tools"
+  },
+  {
+    "id": "s6",
+    "name": "Git & GitHub",
+    "icon": "fa-brands fa-github",
+    "color": "text-gray-800 dark:text-white group-hover:text-brand-light",
+    "category": "tools"
+  },
+  {
+    "id": "s7",
+    "name": "AutoCAD & 3D Design",
+    "icon": "fa-solid fa-compass-drafting",
+    "color": "text-red-500 dark:text-red-400 group-hover:text-red-600 dark:group-hover:text-red-300",
+    "category": "tools"
+  },
+  {
+    "id": "s8",
+    "name": "Team Coordination",
+    "icon": "fa-solid fa-network-wired",
+    "color": "text-blue-500 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300",
+    "category": "tools"
+  }
+]

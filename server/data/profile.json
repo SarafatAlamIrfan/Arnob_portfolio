@@ -1,0 +1,25 @@
+{
+  "name": "Arnob",
+  "title": "Creative Designer & Hardware Innovator",
+  "tagline": "Enthusiastic Tinkerer & Project Coordinator",
+  "bio": "I am Arnob, a creative individual with a passion for designing, prototyping electronics, and managing dynamic projects. I bridge the gap between creative visions and technical realities.",
+  "aboutHeading": "A Passionate Multi-Disciplinary Creator",
+  "aboutText1": "With a strong background in creative designs and a love for building things, I actively explore fields like hardware prototyping, product coordination, and front-end interface design.",
+  "aboutText2": "As an innovator from a non-CS background, I value simplicity, user-friendliness, and clear communication. I thrive on collaborating with technical experts to construct robust solutions that solve real-world problems.",
+  "avatar": "/image/LinkedIn_HeadShot.jpg",
+  "coverImage": "/image/Portfolio_cover.jpg",
+  "email": "arnob@example.com",
+  "location": "Dhaka, Bangladesh",
+  "socialLinks": {
+    "github": "https://github.com/",
+    "linkedin": "https://linkedin.com/",
+    "facebook": "https://facebook.com/",
+    "instagram": "https://instagram.com/",
+    "twitter": "https://x.com/"
+  },
+  "typewriterTexts": [
+    "Creative Designer",
+    "Hardware Innovator",
+    "Project Manager"
+  ]
+}

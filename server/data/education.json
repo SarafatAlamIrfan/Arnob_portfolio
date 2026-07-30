@@ -1,0 +1,16 @@
+[
+  {
+    "id": "e1",
+    "degree": "B.Sc. in Creative Design & Production",
+    "institution": "Dhaka University",
+    "timeline": "2023 - Present",
+    "details": "Focusing on product design, media coordination, and creative applications."
+  },
+  {
+    "id": "e2",
+    "degree": "Higher Secondary Certificate (HSC)",
+    "institution": "Dhaka College",
+    "timeline": "Passing Year: 2022",
+    "details": "Completed with major in science."
+  }
+]

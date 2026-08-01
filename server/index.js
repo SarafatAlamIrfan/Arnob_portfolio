@@ -33,7 +33,9 @@ const ensureDirectories = async () => {
     console.error('Error creating directory structures:', err);
   }
 };
-ensureDirectories();
+if (!process.env.VERCEL) {
+  ensureDirectories();
+}
 
 // MongoDB configuration
 let isMongo = false;

@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import bcryptjs from 'bcryptjs';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
+import mongoose from 'mongoose';
 
 // Configure dotenv
 dotenv.config();
@@ -34,6 +35,100 @@ const ensureDirectories = async () => {
 };
 ensureDirectories();
 
+// MongoDB configuration
+let isMongo = false;
+if (process.env.MONGODB_URI) {
+  console.log('Connecting to MongoDB Atlas...');
+  mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+      console.log('Successfully connected to MongoDB Atlas');
+      isMongo = true;
+    })
+    .catch((err) => {
+      console.error('Failed to connect to MongoDB Atlas, falling back to local JSON storage:', err);
+    });
+} else {
+  console.log('MONGODB_URI environment variable is missing. Running on local JSON storage');
+}
+
+const isMongoActive = () => isMongo && mongoose.connection.readyState === 1;
+
+// --- MONGOOSE SCHEMAS & MODELS ---
+const profileSchema = new mongoose.Schema({
+  name: String,
+  title: String,
+  tagline: String,
+  bio: String,
+  aboutHeading: String,
+  aboutText1: String,
+  aboutText2: String,
+  avatar: String,
+  coverImage: String,
+  email: String,
+  location: String,
+  socialLinks: mongoose.Schema.Types.Mixed,
+  typewriterTexts: [String],
+});
+const ProfileModel = mongoose.model('Profile', profileSchema);
+
+const projectSchema = new mongoose.Schema({
+  id: { type: String, unique: true },
+  title: String,
+  description: String,
+  category: String,
+  link: String,
+  linkLabel: String,
+  image: String,
+});
+const ProjectModel = mongoose.model('Project', projectSchema);
+
+const achievementSchema = new mongoose.Schema({
+  id: { type: String, unique: true },
+  title: String,
+  description: String,
+  image: String,
+});
+const AchievementModel = mongoose.model('Achievement', achievementSchema);
+
+const skillSchema = new mongoose.Schema({
+  id: { type: String, unique: true },
+  name: String,
+  icon: String,
+  color: String,
+  category: String,
+});
+const SkillModel = mongoose.model('Skill', skillSchema);
+
+const educationSchema = new mongoose.Schema({
+  id: { type: String, unique: true },
+  degree: String,
+  institution: String,
+  timeline: String,
+  details: String,
+});
+const EducationModel = mongoose.model('Education', educationSchema);
+
+const experienceSchema = new mongoose.Schema({
+  id: { type: String, unique: true },
+  role: String,
+  company: String,
+  timeline: String,
+  details: String,
+});
+const ExperienceModel = mongoose.model('Experience', experienceSchema);
+
+const messageSchema = new mongoose.Schema({
+  id: { type: String, unique: true },
+  timestamp: String,
+  name: String,
+  email: String,
+  subject: String,
+  message: String,
+  read: Boolean,
+});
+const MessageModel = mongoose.model('Message', messageSchema);
+
 // Cloudinary configuration
 const isCloudinaryConfigured = !!(
   process.env.CLOUDINARY_CLOUD_NAME &&
@@ -53,7 +148,6 @@ if (isCloudinaryConfigured) {
 }
 
 // Multer Storage Configuration
-// In memory storage if uploading to Cloudinary, else disk storage
 const storage = isCloudinaryConfigured
   ? multer.memoryStorage()
   : multer.diskStorage({
@@ -117,7 +211,6 @@ const readJsonFile = async (filename, defaultValue = []) => {
     const data = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
-    // If file doesn't exist, create it with default value
     await writeJsonFile(filename, defaultValue);
     return defaultValue;
   }
@@ -161,50 +254,98 @@ app.post('/api/admin/login', (req, res) => {
   return res.status(400).json({ error: 'Invalid username or password' });
 });
 
-// Verify token route (to auto login in front-end)
 app.get('/api/admin/verify', authMiddleware, (req, res) => {
   res.json({ valid: true, username: req.admin.username });
 });
 
-// --- DYNAMIC PROFILE ENDPOINTS ---
-app.get('/api/profile', async (req, res) => {
-  const profile = await readJsonFile('profile.json', {
+// --- DYNAMIC PROFILE HELPERS & ENDPOINTS ---
+const fetchProfileData = async () => {
+  const fileDefault = {
     name: 'Arnob',
     title: 'Creative Designer & Hardware Innovator',
     tagline: 'Enthusiastic Tinkerer',
     bio: 'I am Arnob...',
+    aboutHeading: 'About Me',
+    aboutText1: 'Biography details here...',
     avatar: '/image/LinkedIn_HeadShot.jpg',
     coverImage: '/image/Portfolio_cover.jpg',
     email: 'arnob@example.com',
     location: 'Dhaka, Bangladesh',
     socialLinks: {},
     typewriterTexts: [],
-  });
-  res.json(profile);
+  };
+
+  if (isMongoActive()) {
+    let p = await ProfileModel.findOne();
+    if (!p) {
+      const defaultProfile = await readJsonFile('profile.json', fileDefault);
+      p = new ProfileModel(defaultProfile);
+      await p.save();
+    }
+    return p;
+  }
+  return await readJsonFile('profile.json', fileDefault);
+};
+
+app.get('/api/profile', async (req, res) => {
+  try {
+    const profile = await fetchProfileData();
+    res.json(profile);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Failed to fetch profile' });
+  }
 });
 
 app.post('/api/profile', authMiddleware, async (req, res) => {
   try {
-    await writeJsonFile('profile.json', req.body);
+    if (isMongoActive()) {
+      let p = await ProfileModel.findOne();
+      if (p) {
+        Object.assign(p, req.body);
+        await p.save();
+      } else {
+        p = new ProfileModel(req.body);
+        await p.save();
+      }
+    } else {
+      await writeJsonFile('profile.json', req.body);
+    }
     res.json({ success: true, message: 'Profile updated successfully!' });
   } catch (error) {
+    console.error('Error saving profile:', error);
     res.status(500).json({ error: 'Failed to save profile' });
   }
 });
 
-// --- PROJECTS CRUD ---
+// --- PROJECTS ENDPOINTS ---
 app.get('/api/projects', async (req, res) => {
-  const projects = await readJsonFile('projects.json', []);
-  res.json(projects);
+  try {
+    if (isMongoActive()) {
+      const projects = await ProjectModel.find();
+      return res.json(projects);
+    }
+    const projects = await readJsonFile('projects.json', []);
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
 });
 
 app.post('/api/projects', authMiddleware, async (req, res) => {
   try {
-    const projects = await readJsonFile('projects.json', []);
     const newProject = {
       id: 'p_' + Date.now(),
       ...req.body,
     };
+
+    if (isMongoActive()) {
+      const p = new ProjectModel(newProject);
+      await p.save();
+      return res.status(201).json(p);
+    }
+
+    const projects = await readJsonFile('projects.json', []);
     projects.push(newProject);
     await writeJsonFile('projects.json', projects);
     res.status(201).json(newProject);
@@ -215,6 +356,12 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
 
 app.put('/api/projects/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const p = await ProjectModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      if (!p) return res.status(404).json({ error: 'Project not found' });
+      return res.json(p);
+    }
+
     const projects = await readJsonFile('projects.json', []);
     const index = projects.findIndex((p) => p.id === req.params.id);
     if (index === -1) {
@@ -230,6 +377,12 @@ app.put('/api/projects/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/projects/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const result = await ProjectModel.deleteOne({ id: req.params.id });
+      if (result.deletedCount === 0) return res.status(404).json({ error: 'Project not found' });
+      return res.json({ success: true, message: 'Project deleted' });
+    }
+
     let projects = await readJsonFile('projects.json', []);
     projects = projects.filter((p) => p.id !== req.params.id);
     await writeJsonFile('projects.json', projects);
@@ -239,19 +392,34 @@ app.delete('/api/projects/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// --- ACHIEVEMENTS CRUD ---
+// --- ACHIEVEMENTS ENDPOINTS ---
 app.get('/api/achievements', async (req, res) => {
-  const achievements = await readJsonFile('achievements.json', []);
-  res.json(achievements);
+  try {
+    if (isMongoActive()) {
+      const achievements = await AchievementModel.find();
+      return res.json(achievements);
+    }
+    const achievements = await readJsonFile('achievements.json', []);
+    res.json(achievements);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch achievements' });
+  }
 });
 
 app.post('/api/achievements', authMiddleware, async (req, res) => {
   try {
-    const achievements = await readJsonFile('achievements.json', []);
     const newAchievement = {
       id: 'a_' + Date.now(),
       ...req.body,
     };
+
+    if (isMongoActive()) {
+      const a = new AchievementModel(newAchievement);
+      await a.save();
+      return res.status(201).json(a);
+    }
+
+    const achievements = await readJsonFile('achievements.json', []);
     achievements.push(newAchievement);
     await writeJsonFile('achievements.json', achievements);
     res.status(201).json(newAchievement);
@@ -262,6 +430,12 @@ app.post('/api/achievements', authMiddleware, async (req, res) => {
 
 app.put('/api/achievements/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const a = await AchievementModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      if (!a) return res.status(404).json({ error: 'Achievement not found' });
+      return res.json(a);
+    }
+
     const achievements = await readJsonFile('achievements.json', []);
     const index = achievements.findIndex((a) => a.id === req.params.id);
     if (index === -1) {
@@ -277,6 +451,12 @@ app.put('/api/achievements/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/achievements/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const result = await AchievementModel.deleteOne({ id: req.params.id });
+      if (result.deletedCount === 0) return res.status(404).json({ error: 'Achievement not found' });
+      return res.json({ success: true, message: 'Achievement deleted' });
+    }
+
     let achievements = await readJsonFile('achievements.json', []);
     achievements = achievements.filter((a) => a.id !== req.params.id);
     await writeJsonFile('achievements.json', achievements);
@@ -286,19 +466,34 @@ app.delete('/api/achievements/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// --- SKILLS CRUD ---
+// --- SKILLS ENDPOINTS ---
 app.get('/api/skills', async (req, res) => {
-  const skills = await readJsonFile('skills.json', []);
-  res.json(skills);
+  try {
+    if (isMongoActive()) {
+      const skills = await SkillModel.find();
+      return res.json(skills);
+    }
+    const skills = await readJsonFile('skills.json', []);
+    res.json(skills);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch skills' });
+  }
 });
 
 app.post('/api/skills', authMiddleware, async (req, res) => {
   try {
-    const skills = await readJsonFile('skills.json', []);
     const newSkill = {
       id: 's_' + Date.now(),
       ...req.body,
     };
+
+    if (isMongoActive()) {
+      const s = new SkillModel(newSkill);
+      await s.save();
+      return res.status(201).json(s);
+    }
+
+    const skills = await readJsonFile('skills.json', []);
     skills.push(newSkill);
     await writeJsonFile('skills.json', skills);
     res.status(201).json(newSkill);
@@ -309,6 +504,12 @@ app.post('/api/skills', authMiddleware, async (req, res) => {
 
 app.put('/api/skills/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const s = await SkillModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      if (!s) return res.status(404).json({ error: 'Skill not found' });
+      return res.json(s);
+    }
+
     const skills = await readJsonFile('skills.json', []);
     const index = skills.findIndex((s) => s.id === req.params.id);
     if (index === -1) {
@@ -324,6 +525,12 @@ app.put('/api/skills/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/skills/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const result = await SkillModel.deleteOne({ id: req.params.id });
+      if (result.deletedCount === 0) return res.status(404).json({ error: 'Skill not found' });
+      return res.json({ success: true, message: 'Skill deleted' });
+    }
+
     let skills = await readJsonFile('skills.json', []);
     skills = skills.filter((s) => s.id !== req.params.id);
     await writeJsonFile('skills.json', skills);
@@ -333,19 +540,34 @@ app.delete('/api/skills/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// --- EDUCATION CRUD ---
+// --- EDUCATION ENDPOINTS ---
 app.get('/api/education', async (req, res) => {
-  const education = await readJsonFile('education.json', []);
-  res.json(education);
+  try {
+    if (isMongoActive()) {
+      const education = await EducationModel.find();
+      return res.json(education);
+    }
+    const education = await readJsonFile('education.json', []);
+    res.json(education);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch education' });
+  }
 });
 
 app.post('/api/education', authMiddleware, async (req, res) => {
   try {
-    const education = await readJsonFile('education.json', []);
     const newEdu = {
       id: 'e_' + Date.now(),
       ...req.body,
     };
+
+    if (isMongoActive()) {
+      const edu = new EducationModel(newEdu);
+      await edu.save();
+      return res.status(201).json(edu);
+    }
+
+    const education = await readJsonFile('education.json', []);
     education.push(newEdu);
     await writeJsonFile('education.json', education);
     res.status(201).json(newEdu);
@@ -356,6 +578,12 @@ app.post('/api/education', authMiddleware, async (req, res) => {
 
 app.put('/api/education/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const edu = await EducationModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      if (!edu) return res.status(404).json({ error: 'Education not found' });
+      return res.json(edu);
+    }
+
     const education = await readJsonFile('education.json', []);
     const index = education.findIndex((e) => e.id === req.params.id);
     if (index === -1) {
@@ -371,6 +599,12 @@ app.put('/api/education/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/education/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const result = await EducationModel.deleteOne({ id: req.params.id });
+      if (result.deletedCount === 0) return res.status(404).json({ error: 'Education not found' });
+      return res.json({ success: true, message: 'Education deleted' });
+    }
+
     let education = await readJsonFile('education.json', []);
     education = education.filter((e) => e.id !== req.params.id);
     await writeJsonFile('education.json', education);
@@ -380,19 +614,34 @@ app.delete('/api/education/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// --- EXPERIENCE CRUD ---
+// --- EXPERIENCE ENDPOINTS ---
 app.get('/api/experience', async (req, res) => {
-  const experience = await readJsonFile('experience.json', []);
-  res.json(experience);
+  try {
+    if (isMongoActive()) {
+      const experience = await ExperienceModel.find();
+      return res.json(experience);
+    }
+    const experience = await readJsonFile('experience.json', []);
+    res.json(experience);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch experience' });
+  }
 });
 
 app.post('/api/experience', authMiddleware, async (req, res) => {
   try {
-    const experience = await readJsonFile('experience.json', []);
     const newExp = {
       id: 'ex_' + Date.now(),
       ...req.body,
     };
+
+    if (isMongoActive()) {
+      const exp = new ExperienceModel(newExp);
+      await exp.save();
+      return res.status(201).json(exp);
+    }
+
+    const experience = await readJsonFile('experience.json', []);
     experience.push(newExp);
     await writeJsonFile('experience.json', experience);
     res.status(201).json(newExp);
@@ -403,6 +652,12 @@ app.post('/api/experience', authMiddleware, async (req, res) => {
 
 app.put('/api/experience/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const exp = await ExperienceModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      if (!exp) return res.status(404).json({ error: 'Experience not found' });
+      return res.json(exp);
+    }
+
     const experience = await readJsonFile('experience.json', []);
     const index = experience.findIndex((e) => e.id === req.params.id);
     if (index === -1) {
@@ -418,6 +673,12 @@ app.put('/api/experience/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/experience/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const result = await ExperienceModel.deleteOne({ id: req.params.id });
+      if (result.deletedCount === 0) return res.status(404).json({ error: 'Experience not found' });
+      return res.json({ success: true, message: 'Experience deleted' });
+    }
+
     let experience = await readJsonFile('experience.json', []);
     experience = experience.filter((e) => e.id !== req.params.id);
     await writeJsonFile('experience.json', experience);
@@ -447,9 +708,14 @@ app.post('/api/contact', async (req, res) => {
   };
 
   try {
-    const messages = await readJsonFile('messages.json', []);
-    messages.push(newMessage);
-    await writeJsonFile('messages.json', messages);
+    if (isMongoActive()) {
+      const m = new MessageModel(newMessage);
+      await m.save();
+    } else {
+      const messages = await readJsonFile('messages.json', []);
+      messages.push(newMessage);
+      await writeJsonFile('messages.json', messages);
+    }
 
     // Send email via Nodemailer if SMTP configured
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, RECEIVER_EMAIL } = process.env;
@@ -496,21 +762,36 @@ app.post('/api/contact', async (req, res) => {
 
 // Admin Get Messages
 app.get('/api/messages', authMiddleware, async (req, res) => {
-  const messages = await readJsonFile('messages.json', []);
-  // Sort latest first
-  messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  res.json(messages);
+  try {
+    if (isMongoActive()) {
+      const messages = await MessageModel.find().sort({ timestamp: -1 });
+      return res.json(messages);
+    }
+    const messages = await readJsonFile('messages.json', []);
+    messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
 });
 
 // Admin Mark Message as Read/Unread
 app.put('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
+    const isRead = req.body.read !== undefined ? req.body.read : true;
+
+    if (isMongoActive()) {
+      const m = await MessageModel.findOneAndUpdate({ id: req.params.id }, { read: isRead }, { new: true });
+      if (!m) return res.status(404).json({ error: 'Message not found' });
+      return res.json(m);
+    }
+
     const messages = await readJsonFile('messages.json', []);
     const index = messages.findIndex((m) => m.id === req.params.id);
     if (index === -1) {
       return res.status(404).json({ error: 'Message not found' });
     }
-    messages[index].read = req.body.read !== undefined ? req.body.read : true;
+    messages[index].read = isRead;
     await writeJsonFile('messages.json', messages);
     res.json(messages[index]);
   } catch (error) {
@@ -521,6 +802,12 @@ app.put('/api/messages/:id', authMiddleware, async (req, res) => {
 // Admin Delete Message
 app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
+    if (isMongoActive()) {
+      const result = await MessageModel.deleteOne({ id: req.params.id });
+      if (result.deletedCount === 0) return res.status(404).json({ error: 'Message not found' });
+      return res.json({ success: true, message: 'Message deleted' });
+    }
+
     let messages = await readJsonFile('messages.json', []);
     messages = messages.filter((m) => m.id !== req.params.id);
     await writeJsonFile('messages.json', messages);

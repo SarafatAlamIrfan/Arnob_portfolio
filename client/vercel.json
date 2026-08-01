@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/((?!assets/|image/|favicon.svg|icons.svg|robots.txt|sitemap.xml|Sarafat_CV.pdf).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

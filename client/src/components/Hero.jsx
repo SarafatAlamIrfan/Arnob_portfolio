@@ -134,7 +134,7 @@ export default function Hero({ profile }) {
                 <i className="fa-solid fa-wand-magic-sparkles text-brand-light text-xl"></i>
                 <div className="text-left">
                   <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider">Passionate</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">Creator</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{profile?.title || 'Creator'}</p>
                 </div>
               </div>
             </div>

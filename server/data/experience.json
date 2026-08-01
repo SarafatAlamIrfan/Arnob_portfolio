@@ -1,16 +1,9 @@
 [
   {
-    "id": "ex1",
-    "role": "Creative Lead & Designer",
-    "company": "Local Agency",
-    "timeline": "Jan 2025 - Present",
-    "details": "Directing layout design, producing visual materials, and managing customer-facing branding workflows."
-  },
-  {
-    "id": "ex2",
-    "role": "Project Coordinator",
-    "company": "Innovation Lab",
-    "timeline": "June 2024 - Dec 2024",
-    "details": "Coordinated multi-disciplinary teams working on hardware gadgets and software interfaces, ensuring timely project delivery."
+    "id": "ex_1",
+    "role": "Robotics & Hardware Developer",
+    "company": "Academic & Personal Projects",
+    "timeline": "2021 - Present",
+    "details": "Designed and built custom FPV drones, soccer bots, digital weight scales, and smart systems using Arduino and PIC microcontrollers."
   }
 ]

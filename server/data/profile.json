@@ -1,25 +1,25 @@
 {
-  "name": "Arnob",
-  "title": "Creative Designer & Innovator Extraordinaire",
-  "tagline": "Enthusiastic Tinkerer & Project Coordinator",
-  "bio": "I am Arnob, a creative individual with a passion for designing, prototyping electronics, and managing dynamic projects. I bridge the gap between creative visions and technical realities.",
-  "aboutHeading": "A Passionate Multi-Disciplinary Creator",
-  "aboutText1": "With a strong background in creative designs and a love for building things, I actively explore fields like hardware prototyping, product coordination, and front-end interface design.",
-  "aboutText2": "As an innovator from a non-CS background, I value simplicity, user-friendliness, and clear communication. I thrive on collaborating with technical experts to construct robust solutions that solve real-world problems.",
+  "name": "Raiyan Rongon Arnob",
+  "title": "",
+  "tagline": "Undergraduate Electrical & Electronic Engineering Student",
+  "bio": "I am an undergraduate Electrical and Electronic Engineering student at East West University with a strong passion for Embedded Systems, Robotics, and hardware innovation. I enjoy transforming ideas into practical solutions through hands-on projects and continuous experimentation. My experience includes developing embedded systems, building FPV drones and soccer robots, designing electronic circuits, and simulating systems using MATLAB/Simulink, including 2D floor planning. I am always eager to learn new technologies, solve real-world engineering problems, and improve my skills by building projects that combine electronics, programming, and creativity. Every project is an opportunity to learn something new.",
+  "aboutHeading": "About Me",
+  "aboutText1": "I am an undergraduate Electrical and Electronic Engineering student at East West University with a strong passion for Embedded Systems, Robotics, and hardware innovation. I enjoy transforming ideas into practical solutions through hands-on projects and continuous experimentation.",
+  "aboutText2": "My experience includes developing embedded systems, building FPV drones and soccer robots, designing electronic circuits, and simulating systems using MATLAB/Simulink, including 2D floor planning.",
   "avatar": "/image/LinkedIn_HeadShot.jpg",
   "coverImage": "/image/Portfolio_cover.jpg",
-  "email": "arnob@example.com",
+  "email": "arnobrongon7@gmail.com",
   "location": "Dhaka, Bangladesh",
   "socialLinks": {
     "github": "https://github.com/",
-    "linkedin": "https://linkedin.com/",
+    "linkedin": "https://www.linkedin.com/in/raiyan-rongon-arnob-3a3453307",
     "facebook": "https://facebook.com/",
     "instagram": "https://instagram.com/",
     "twitter": "https://x.com/"
   },
   "typewriterTexts": [
-    "Creative Designer",
-    "Hardware Innovator",
-    "Project Manager"
+    "Electrical Engineer",
+    "Robotics Enthusiast",
+    "Hardware Innovator"
   ]
 }

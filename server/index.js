@@ -37,24 +37,7 @@ if (!process.env.VERCEL) {
   ensureDirectories();
 }
 
-// MongoDB configuration
 let isMongo = false;
-if (process.env.MONGODB_URI) {
-  console.log('Connecting to MongoDB Atlas...');
-  mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => {
-      console.log('Successfully connected to MongoDB Atlas');
-      isMongo = true;
-    })
-    .catch((err) => {
-      console.error('Failed to connect to MongoDB Atlas, falling back to local JSON storage:', err);
-    });
-} else {
-  console.log('MONGODB_URI environment variable is missing. Running on local JSON storage');
-}
-
-const isMongoActive = () => !!process.env.MONGODB_URI;
 
 // --- MONGOOSE SCHEMAS & MODELS ---
 const profileSchema = new mongoose.Schema({
@@ -222,6 +205,95 @@ const writeJsonFile = async (filename, data) => {
   const filePath = path.join(DATA_DIR, filename);
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
 };
+
+// Database Seeding Helper
+const seedDatabase = async () => {
+  try {
+    console.log('Checking database collections for seeding...');
+    
+    // Seed Profile
+    let p = await ProfileModel.findOne();
+    if (!p) {
+      const defaultProfile = await readJsonFile('profile.json', {});
+      p = new ProfileModel(defaultProfile);
+      await p.save();
+      console.log('Seeded Profile collection');
+    }
+
+    // Seed Projects
+    const projectsCount = await ProjectModel.countDocuments();
+    if (projectsCount === 0) {
+      const fileProjects = await readJsonFile('projects.json', []);
+      if (fileProjects.length > 0) {
+        await ProjectModel.insertMany(fileProjects);
+        console.log('Seeded Projects collection');
+      }
+    }
+
+    // Seed Achievements
+    const achievementsCount = await AchievementModel.countDocuments();
+    if (achievementsCount === 0) {
+      const fileAchievements = await readJsonFile('achievements.json', []);
+      if (fileAchievements.length > 0) {
+        await AchievementModel.insertMany(fileAchievements);
+        console.log('Seeded Achievements collection');
+      }
+    }
+
+    // Seed Skills
+    const skillsCount = await SkillModel.countDocuments();
+    if (skillsCount === 0) {
+      const fileSkills = await readJsonFile('skills.json', []);
+      if (fileSkills.length > 0) {
+        await SkillModel.insertMany(fileSkills);
+        console.log('Seeded Skills collection');
+      }
+    }
+
+    // Seed Education
+    const educationCount = await EducationModel.countDocuments();
+    if (educationCount === 0) {
+      const fileEducation = await readJsonFile('education.json', []);
+      if (fileEducation.length > 0) {
+        await EducationModel.insertMany(fileEducation);
+        console.log('Seeded Education collection');
+      }
+    }
+
+    // Seed Experience
+    const experienceCount = await ExperienceModel.countDocuments();
+    if (experienceCount === 0) {
+      const fileExperience = await readJsonFile('experience.json', []);
+      if (fileExperience.length > 0) {
+        await ExperienceModel.insertMany(fileExperience);
+        console.log('Seeded Experience collection');
+      }
+    }
+
+    console.log('Database seeding checks completed successfully!');
+  } catch (error) {
+    console.error('Error during database seeding:', error);
+  }
+};
+
+// MongoDB configuration & connection
+if (process.env.MONGODB_URI) {
+  console.log('Connecting to MongoDB Atlas...');
+  mongoose
+    .connect(process.env.MONGODB_URI)
+    .then(() => {
+      console.log('Successfully connected to MongoDB Atlas');
+      isMongo = true;
+      seedDatabase();
+    })
+    .catch((err) => {
+      console.error('Failed to connect to MongoDB Atlas:', err);
+    });
+} else {
+  console.log('MONGODB_URI environment variable is missing. Running on local JSON storage');
+}
+
+const isMongoActive = () => !!process.env.MONGODB_URI;
 
 // Admin authentication middleware
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_arnob_portfolio';

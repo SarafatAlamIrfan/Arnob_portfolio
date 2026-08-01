@@ -1,16 +1,16 @@
 [
   {
-    "id": "e1",
-    "degree": "B.Sc. in Creative Design & Production",
-    "institution": "Dhaka University",
-    "timeline": "2023 - Present",
-    "details": "Focusing on product design, media coordination, and creative applications."
+    "id": "e_1",
+    "degree": "B.Sc. in Electrical & Electronic Engineering",
+    "institution": "East West University",
+    "timeline": "2023 - 2027 (Expected)",
+    "details": "Focusing on Embedded Systems, Robotics, and Circuit Design."
   },
   {
-    "id": "e2",
-    "degree": "Higher Secondary Certificate (HSC)",
-    "institution": "Dhaka College",
-    "timeline": "Passing Year: 2022",
-    "details": "Completed with major in science."
+    "id": "e_2",
+    "degree": "HSC",
+    "institution": "Dhaka Imperial College",
+    "timeline": "2021",
+    "details": "Science Group."
   }
 ]

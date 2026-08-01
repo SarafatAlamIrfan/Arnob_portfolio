@@ -52,7 +52,7 @@ if (process.env.MONGODB_URI) {
   console.log('MONGODB_URI environment variable is missing. Running on local JSON storage');
 }
 
-const isMongoActive = () => isMongo && mongoose.connection.readyState === 1;
+const isMongoActive = () => !!process.env.MONGODB_URI;
 
 // --- MONGOOSE SCHEMAS & MODELS ---
 const profileSchema = new mongoose.Schema({

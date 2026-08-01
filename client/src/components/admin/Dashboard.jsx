@@ -41,39 +41,65 @@ export default function Dashboard({ token, onLogout }) {
 
       // Profile
       const profileRes = await fetch(`${API_BASE}/api/profile`);
-      const profileData = await profileRes.json();
-      setProfile(profileData);
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        if (profileData && !profileData.error) {
+          setProfile(profileData);
+        }
+      }
 
       // Projects
       const projectsRes = await fetch(`${API_BASE}/api/projects`);
-      const projectsData = await projectsRes.json();
-      setProjects(projectsData);
+      if (projectsRes.ok) {
+        const projectsData = await projectsRes.json();
+        if (Array.isArray(projectsData)) {
+          setProjects(projectsData);
+        }
+      }
 
       // Achievements
       const achievementsRes = await fetch(`${API_BASE}/api/achievements`);
-      const achievementsData = await achievementsRes.json();
-      setAchievements(achievementsData);
+      if (achievementsRes.ok) {
+        const achievementsData = await achievementsRes.json();
+        if (Array.isArray(achievementsData)) {
+          setAchievements(achievementsData);
+        }
+      }
 
       // Skills
       const skillsRes = await fetch(`${API_BASE}/api/skills`);
-      const skillsData = await skillsRes.json();
-      setSkills(skillsData);
+      if (skillsRes.ok) {
+        const skillsData = await skillsRes.json();
+        if (Array.isArray(skillsData)) {
+          setSkills(skillsData);
+        }
+      }
 
       // Education
       const eduRes = await fetch(`${API_BASE}/api/education`);
-      const eduData = await eduRes.json();
-      setEducation(eduData);
+      if (eduRes.ok) {
+        const eduData = await eduRes.json();
+        if (Array.isArray(eduData)) {
+          setEducation(eduData);
+        }
+      }
 
       // Experience
       const expRes = await fetch(`${API_BASE}/api/experience`);
-      const expData = await expRes.json();
-      setExperience(expData);
+      if (expRes.ok) {
+        const expData = await expRes.json();
+        if (Array.isArray(expData)) {
+          setExperience(expData);
+        }
+      }
 
       // Messages
       const msgRes = await fetch(`${API_BASE}/api/messages`, { headers });
       if (msgRes.ok) {
         const msgData = await msgRes.json();
-        setMessages(msgData);
+        if (Array.isArray(msgData)) {
+          setMessages(msgData);
+        }
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

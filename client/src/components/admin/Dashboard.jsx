@@ -811,7 +811,6 @@ export default function Dashboard({ token, onLogout }) {
                   value={profile.aboutHeading}
                   onChange={(e) => setProfile({ ...profile, aboutHeading: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                  required
                 />
               </div>
 
@@ -822,7 +821,6 @@ export default function Dashboard({ token, onLogout }) {
                   onChange={(e) => setProfile({ ...profile, aboutText1: e.target.value })}
                   rows="4"
                   className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                  required
                 ></textarea>
               </div>
 

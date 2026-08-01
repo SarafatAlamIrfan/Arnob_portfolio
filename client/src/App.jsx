@@ -42,21 +42,16 @@ export default function App() {
   useEffect(() => {
     const loadPortfolioData = async () => {
       try {
-        const [profileRes, skillsRes, projectsRes, achievementsRes, eduRes, expRes] = await Promise.all([
-          fetch(`${API_BASE}/api/profile`),
-          fetch(`${API_BASE}/api/skills`),
-          fetch(`${API_BASE}/api/projects`),
-          fetch(`${API_BASE}/api/achievements`),
-          fetch(`${API_BASE}/api/education`),
-          fetch(`${API_BASE}/api/experience`),
-        ]);
-
-        if (profileRes.ok) setProfile(await profileRes.json());
-        if (skillsRes.ok) setSkills(await skillsRes.json());
-        if (projectsRes.ok) setProjects(await projectsRes.json());
-        if (achievementsRes.ok) setAchievements(await achievementsRes.json());
-        if (eduRes.ok) setEducation(await eduRes.json());
-        if (expRes.ok) setExperience(await expRes.json());
+        const res = await fetch(`${API_BASE}/api/portfolio-data`);
+        if (res.ok) {
+          const data = await res.json();
+          setProfile(data.profile);
+          setSkills(data.skills || []);
+          setProjects(data.projects || []);
+          setAchievements(data.achievements || []);
+          setEducation(data.education || []);
+          setExperience(data.experience || []);
+        }
       } catch (err) {
         console.error('Error fetching dynamic portfolio data:', err);
       } finally {

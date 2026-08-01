@@ -276,22 +276,34 @@ const seedDatabase = async () => {
   }
 };
 
-// MongoDB configuration & connection
-if (process.env.MONGODB_URI) {
+let isConnected = false;
+
+const connectDb = async () => {
+  if (isConnected || mongoose.connection.readyState === 1) {
+    return;
+  }
+  
+  if (!process.env.MONGODB_URI) {
+    return;
+  }
+  
   console.log('Connecting to MongoDB Atlas...');
-  mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => {
-      console.log('Successfully connected to MongoDB Atlas');
-      isMongo = true;
-      seedDatabase();
-    })
-    .catch((err) => {
-      console.error('Failed to connect to MongoDB Atlas:', err);
-    });
-} else {
-  console.log('MONGODB_URI environment variable is missing. Running on local JSON storage');
-}
+  await mongoose.connect(process.env.MONGODB_URI);
+  isConnected = true;
+  console.log('Successfully connected to MongoDB Atlas');
+  await seedDatabase();
+};
+
+// Express database middleware to ensure connection on Vercel serverless functions
+app.use(async (req, res, next) => {
+  try {
+    await connectDb();
+    next();
+  } catch (err) {
+    console.error('Database connection middleware error:', err);
+    next();
+  }
+});
 
 const isMongoActive = () => !!process.env.MONGODB_URI;
 
@@ -368,6 +380,26 @@ app.get('/api/profile', async (req, res) => {
   } catch (error) {
     console.error('Error fetching profile:', error);
     res.status(500).json({ error: 'Failed to fetch profile' });
+  }
+});
+
+// Combined portfolio data endpoint to load page blazingly fast in a single serverless invocation
+app.get('/api/portfolio-data', async (req, res) => {
+  try {
+    const isMongo = isMongoActive();
+    const [profile, skills, projects, achievements, education, experience] = await Promise.all([
+      fetchProfileData(),
+      isMongo ? SkillModel.find() : readJsonFile('skills.json', []),
+      isMongo ? ProjectModel.find() : readJsonFile('projects.json', []),
+      isMongo ? AchievementModel.find() : readJsonFile('achievements.json', []),
+      isMongo ? EducationModel.find() : readJsonFile('education.json', []),
+      isMongo ? ExperienceModel.find() : readJsonFile('experience.json', [])
+    ]);
+
+    res.json({ profile, skills, projects, achievements, education, experience });
+  } catch (error) {
+    console.error('Error fetching combined portfolio data:', error);
+    res.status(500).json({ error: 'Failed to fetch portfolio data' });
   }
 });
 

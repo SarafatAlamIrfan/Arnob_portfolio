@@ -202,12 +202,18 @@ const readJsonFile = async (filename, defaultValue = []) => {
     const data = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
+    if (process.env.VERCEL) {
+      return defaultValue;
+    }
     await writeJsonFile(filename, defaultValue);
     return defaultValue;
   }
 };
 
 const writeJsonFile = async (filename, data) => {
+  if (process.env.VERCEL) {
+    throw new Error('Database is offline. Please configure MONGODB_URI in Vercel environment variables.');
+  }
   const filePath = path.join(DATA_DIR, filename);
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
 };
@@ -407,6 +413,16 @@ app.get('/api/profile', async (req, res) => {
     console.error('Error fetching profile:', error);
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
+});
+
+// Database diagnostic endpoint
+app.get('/api/debug-db', (req, res) => {
+  res.json({
+    hasMongoUri: !!process.env.MONGODB_URI,
+    readyState: mongoose.connection.readyState,
+    isVercel: !!process.env.VERCEL,
+    isMongoActive: isMongoActive()
+  });
 });
 
 // Combined portfolio data endpoint to load page blazingly fast in a single serverless invocation

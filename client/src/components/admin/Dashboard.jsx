@@ -817,7 +817,7 @@ export default function Dashboard({ token, onLogout }) {
 
                 {/* About Cover Photo Upload */}
                 <div className="bg-slate-950/50 p-4 border border-slate-800/80 rounded-2xl flex items-center gap-4">
-                  <div className="w-20 h-14 rounded-lg overflow-hidden border border-slate-800 shrink-0 bg-slate-900">
+                  <div className="w-24 h-16 rounded-lg overflow-hidden border border-slate-800 shrink-0 bg-slate-900">
                     <img src={getFullImageUrl(profile.coverImage)} className="w-full h-full object-cover" alt="Cover" />
                   </div>
                   <div className="flex-1">
@@ -835,8 +835,8 @@ export default function Dashboard({ token, onLogout }) {
 
                 {/* CV PDF Upload */}
                 <div className="bg-slate-950/50 p-4 border border-slate-800/80 rounded-2xl flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full border border-slate-800 shrink-0 bg-slate-900 flex items-center justify-center">
-                    <i className="fa-solid fa-file-pdf text-brand-light text-3xl"></i>
+                  <div className="w-14 h-16 rounded-xl border border-slate-800 shrink-0 bg-slate-900 flex items-center justify-center">
+                    <i className="fa-solid fa-file-pdf text-brand-light text-3xl leading-none"></i>
                   </div>
                   <div className="flex-1">
                     <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">CV PDF Document</span>

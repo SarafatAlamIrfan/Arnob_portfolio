@@ -7,21 +7,31 @@ export default function Navbar({ isDark, onToggleTheme, profile }) {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const showSections = profile?.showSections || {
+    about: true,
+    skills: true,
+    projects: true,
+    education: true,
+    experience: true,
+    achievements: true,
+    contact: true
+  };
+
   const navLinks = [
-    { label: 'About', href: '#about' },
-    { label: 'Skills', href: '#skills' },
-    { label: 'Portfolio', href: '#portfolio' },
-    { label: 'Experience', href: '#experience' },
-    { label: 'Achievements', href: '#achievements' },
-    { label: 'Contact', href: '#contact' },
-  ];
+    { label: 'About', href: '#about', sectionKey: 'about' },
+    { label: 'Skills', href: '#skills', sectionKey: 'skills' },
+    { label: 'Portfolio', href: '#portfolio', sectionKey: 'projects' },
+    { label: 'Experience', href: '#experience', sectionKey: 'experience' },
+    { label: 'Achievements', href: '#achievements', sectionKey: 'achievements' },
+    { label: 'Contact', href: '#contact', sectionKey: 'contact' },
+  ].filter(link => showSections[link.sectionKey] !== false);
 
   return (
     <nav className="fixed top-0 w-full glass-card bg-white/70 dark:bg-[#050505]/70 border-b border-gray-200 dark:border-white/10 z-50 transition-all duration-300" id="navbar">
       <div className="container mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           <a href="#home" className="font-display text-2xl font-bold tracking-wider text-gray-900 dark:text-white">
-            {profile?.name || 'Arnob'}<span className="text-brand-light">.</span>
+            {profile?.navbarName || profile?.lastName || profile?.name || 'Arnob'}<span className="text-brand-light">.</span>
           </a>
           
           <div className="hidden md:flex space-x-8 items-center">

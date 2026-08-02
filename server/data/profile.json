@@ -1,13 +1,13 @@
 {
   "name": "Raiyan Rongon Arnob",
-  "title": "",
+  "title": "Student",
   "tagline": "Undergraduate Electrical & Electronic Engineering Student",
-  "bio": "I am an undergraduate Electrical and Electronic Engineering student at East West University with a strong passion for Embedded Systems, Robotics, and hardware innovation. I enjoy transforming ideas into practical solutions through hands-on projects and continuous experimentation. My experience includes developing embedded systems, building FPV drones and soccer robots, designing electronic circuits, and simulating systems using MATLAB/Simulink, including 2D floor planning. I am always eager to learn new technologies, solve real-world engineering problems, and improve my skills by building projects that combine electronics, programming, and creativity. Every project is an opportunity to learn something new.",
-  "aboutHeading": "About Me",
+  "bio": "I am an undergraduate Electrical and Electronic Engineering student at East West University with a strong passion for Embedded Systems, Robotics, and hardware innovation.",
+  "aboutHeading": "A Passionate Tech Enthusiast",
   "aboutText1": "I am an undergraduate Electrical and Electronic Engineering student at East West University with a strong passion for Embedded Systems, Robotics, and hardware innovation. I enjoy transforming ideas into practical solutions through hands-on projects and continuous experimentation.",
   "aboutText2": "My experience includes developing embedded systems, building FPV drones and soccer robots, designing electronic circuits, and simulating systems using MATLAB/Simulink, including 2D floor planning.",
-  "avatar": "/image/LinkedIn_HeadShot.jpg",
-  "coverImage": "/image/Portfolio_cover.jpg",
+  "avatar": "https://res.cloudinary.com/ypnladmh/image/upload/v1785700285/portfolio_arnob/pot4retrirjk292sny3s.jpg",
+  "coverImage": "https://res.cloudinary.com/ypnladmh/image/upload/v1785700413/portfolio_arnob/s16amr4w1tthytwkfwpt.jpg",
   "email": "arnobrongon7@gmail.com",
   "location": "Dhaka, Bangladesh",
   "socialLinks": {
@@ -21,5 +21,22 @@
     "Electrical Engineer",
     "Robotics Enthusiast",
     "Hardware Innovator"
-  ]
+  ],
+  "showSections": {
+    "about": true,
+    "skills": true,
+    "projects": true,
+    "education": true,
+    "experience": true,
+    "achievements": false,
+    "contact": true
+  },
+  "projectCategories": [
+    "Software",
+    "Hardware",
+    "CAD"
+  ],
+  "navbarName": "Arnob",
+  "lastName": "Arnob",
+  "firstName": "Raiyan Rongon"
 }

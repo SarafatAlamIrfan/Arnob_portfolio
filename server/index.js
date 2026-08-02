@@ -42,18 +42,24 @@ let isMongo = false;
 // --- MONGOOSE SCHEMAS & MODELS ---
 const profileSchema = new mongoose.Schema({
   name: String,
+  firstName: String,
+  lastName: String,
+  navbarName: String,
   title: String,
   tagline: String,
   bio: String,
   aboutHeading: String,
   aboutText1: String,
   aboutText2: String,
+  aboutHighlights: mongoose.Schema.Types.Mixed,
   avatar: String,
   coverImage: String,
   email: String,
   location: String,
   socialLinks: mongoose.Schema.Types.Mixed,
   typewriterTexts: [String],
+  showSections: mongoose.Schema.Types.Mixed,
+  projectCategories: [String],
 });
 const ProfileModel = mongoose.model('Profile', profileSchema);
 
@@ -305,7 +311,7 @@ app.use(async (req, res, next) => {
   }
 });
 
-const isMongoActive = () => !!process.env.MONGODB_URI;
+const isMongoActive = () => !!process.env.MONGODB_URI && mongoose.connection.readyState === 1;
 
 // Admin authentication middleware
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_arnob_portfolio';
@@ -347,18 +353,37 @@ app.get('/api/admin/verify', authMiddleware, (req, res) => {
 // --- DYNAMIC PROFILE HELPERS & ENDPOINTS ---
 const fetchProfileData = async () => {
   const fileDefault = {
-    name: 'Arnob',
+    name: 'Raiyan Rongon Arnob',
+    firstName: 'Raiyan Rongon',
+    lastName: 'Arnob',
+    navbarName: 'Arnob',
     title: 'Creative Designer & Hardware Innovator',
     tagline: 'Enthusiastic Tinkerer',
     bio: 'I am Arnob...',
     aboutHeading: 'About Me',
     aboutText1: 'Biography details here...',
+    aboutText2: '',
+    aboutHighlights: [
+      { icon: 'fa-palette', title: 'Creative Design', color: 'text-brand-light' },
+      { icon: 'fa-microchip', title: 'Hardware Dev', color: 'text-pink-500 dark:text-pink-400' },
+      { icon: 'fa-users-viewfinder', title: 'Coordination', color: 'text-blue-500 dark:text-blue-400' }
+    ],
     avatar: '/image/LinkedIn_HeadShot.jpg',
     coverImage: '/image/Portfolio_cover.jpg',
     email: 'arnob@example.com',
     location: 'Dhaka, Bangladesh',
     socialLinks: {},
     typewriterTexts: [],
+    showSections: {
+      about: true,
+      skills: true,
+      projects: true,
+      education: true,
+      experience: true,
+      achievements: true,
+      contact: true
+    },
+    projectCategories: ['Software', 'Hardware']
   };
 
   if (isMongoActive()) {
@@ -405,17 +430,21 @@ app.get('/api/portfolio-data', async (req, res) => {
 
 app.post('/api/profile', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     if (isMongoActive()) {
       let p = await ProfileModel.findOne();
       if (p) {
-        Object.assign(p, req.body);
+        Object.assign(p, cleanData);
         await p.save();
       } else {
-        p = new ProfileModel(req.body);
+        p = new ProfileModel(cleanData);
         await p.save();
       }
     } else {
-      await writeJsonFile('profile.json', req.body);
+      await writeJsonFile('profile.json', cleanData);
     }
     res.json({ success: true, message: 'Profile updated successfully!' });
   } catch (error) {
@@ -440,9 +469,13 @@ app.get('/api/projects', async (req, res) => {
 
 app.post('/api/projects', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     const newProject = {
       id: 'p_' + Date.now(),
-      ...req.body,
+      ...cleanData,
     };
 
     if (isMongoActive()) {
@@ -462,8 +495,12 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
 
 app.put('/api/projects/:id', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     if (isMongoActive()) {
-      const p = await ProjectModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      const p = await ProjectModel.findOneAndUpdate({ id: req.params.id }, cleanData, { new: true });
       if (!p) return res.status(404).json({ error: 'Project not found' });
       return res.json(p);
     }
@@ -473,7 +510,7 @@ app.put('/api/projects/:id', authMiddleware, async (req, res) => {
     if (index === -1) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    projects[index] = { ...projects[index], ...req.body };
+    projects[index] = { ...projects[index], ...cleanData };
     await writeJsonFile('projects.json', projects);
     res.json(projects[index]);
   } catch (error) {
@@ -514,9 +551,13 @@ app.get('/api/achievements', async (req, res) => {
 
 app.post('/api/achievements', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     const newAchievement = {
       id: 'a_' + Date.now(),
-      ...req.body,
+      ...cleanData,
     };
 
     if (isMongoActive()) {
@@ -536,8 +577,12 @@ app.post('/api/achievements', authMiddleware, async (req, res) => {
 
 app.put('/api/achievements/:id', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     if (isMongoActive()) {
-      const a = await AchievementModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      const a = await AchievementModel.findOneAndUpdate({ id: req.params.id }, cleanData, { new: true });
       if (!a) return res.status(404).json({ error: 'Achievement not found' });
       return res.json(a);
     }
@@ -547,7 +592,7 @@ app.put('/api/achievements/:id', authMiddleware, async (req, res) => {
     if (index === -1) {
       return res.status(404).json({ error: 'Achievement not found' });
     }
-    achievements[index] = { ...achievements[index], ...req.body };
+    achievements[index] = { ...achievements[index], ...cleanData };
     await writeJsonFile('achievements.json', achievements);
     res.json(achievements[index]);
   } catch (error) {
@@ -588,9 +633,13 @@ app.get('/api/skills', async (req, res) => {
 
 app.post('/api/skills', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     const newSkill = {
       id: 's_' + Date.now(),
-      ...req.body,
+      ...cleanData,
     };
 
     if (isMongoActive()) {
@@ -610,8 +659,12 @@ app.post('/api/skills', authMiddleware, async (req, res) => {
 
 app.put('/api/skills/:id', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     if (isMongoActive()) {
-      const s = await SkillModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      const s = await SkillModel.findOneAndUpdate({ id: req.params.id }, cleanData, { new: true });
       if (!s) return res.status(404).json({ error: 'Skill not found' });
       return res.json(s);
     }
@@ -621,7 +674,7 @@ app.put('/api/skills/:id', authMiddleware, async (req, res) => {
     if (index === -1) {
       return res.status(404).json({ error: 'Skill not found' });
     }
-    skills[index] = { ...skills[index], ...req.body };
+    skills[index] = { ...skills[index], ...cleanData };
     await writeJsonFile('skills.json', skills);
     res.json(skills[index]);
   } catch (error) {
@@ -662,9 +715,13 @@ app.get('/api/education', async (req, res) => {
 
 app.post('/api/education', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     const newEdu = {
       id: 'e_' + Date.now(),
-      ...req.body,
+      ...cleanData,
     };
 
     if (isMongoActive()) {
@@ -684,8 +741,12 @@ app.post('/api/education', authMiddleware, async (req, res) => {
 
 app.put('/api/education/:id', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     if (isMongoActive()) {
-      const edu = await EducationModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      const edu = await EducationModel.findOneAndUpdate({ id: req.params.id }, cleanData, { new: true });
       if (!edu) return res.status(404).json({ error: 'Education not found' });
       return res.json(edu);
     }
@@ -695,7 +756,7 @@ app.put('/api/education/:id', authMiddleware, async (req, res) => {
     if (index === -1) {
       return res.status(404).json({ error: 'Education not found' });
     }
-    education[index] = { ...education[index], ...req.body };
+    education[index] = { ...education[index], ...cleanData };
     await writeJsonFile('education.json', education);
     res.json(education[index]);
   } catch (error) {
@@ -736,9 +797,13 @@ app.get('/api/experience', async (req, res) => {
 
 app.post('/api/experience', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     const newExp = {
       id: 'ex_' + Date.now(),
-      ...req.body,
+      ...cleanData,
     };
 
     if (isMongoActive()) {
@@ -758,8 +823,12 @@ app.post('/api/experience', authMiddleware, async (req, res) => {
 
 app.put('/api/experience/:id', authMiddleware, async (req, res) => {
   try {
+    const cleanData = { ...req.body };
+    delete cleanData._id;
+    delete cleanData.__v;
+
     if (isMongoActive()) {
-      const exp = await ExperienceModel.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+      const exp = await ExperienceModel.findOneAndUpdate({ id: req.params.id }, cleanData, { new: true });
       if (!exp) return res.status(404).json({ error: 'Experience not found' });
       return res.json(exp);
     }
@@ -769,7 +838,7 @@ app.put('/api/experience/:id', authMiddleware, async (req, res) => {
     if (index === -1) {
       return res.status(404).json({ error: 'Experience not found' });
     }
-    experience[index] = { ...experience[index], ...req.body };
+    experience[index] = { ...experience[index], ...cleanData };
     await writeJsonFile('experience.json', experience);
     res.json(experience[index]);
   } catch (error) {
@@ -874,6 +943,20 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
       return res.json(messages);
     }
     const messages = await readJsonFile('messages.json', []);
+    let updated = false;
+    messages.forEach((m, index) => {
+      if (!m.id) {
+        m.id = 'm_' + (Date.parse(m.timestamp) || Date.now()) + '_' + index;
+        updated = true;
+      }
+      if (m.read === undefined) {
+        m.read = false;
+        updated = true;
+      }
+    });
+    if (updated) {
+      await writeJsonFile('messages.json', messages);
+    }
     messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     res.json(messages);
   } catch (error) {
@@ -887,7 +970,11 @@ app.put('/api/messages/:id', authMiddleware, async (req, res) => {
     const isRead = req.body.read !== undefined ? req.body.read : true;
 
     if (isMongoActive()) {
-      const m = await MessageModel.findOneAndUpdate({ id: req.params.id }, { read: isRead }, { new: true });
+      const query = { id: req.params.id };
+      let m = await MessageModel.findOneAndUpdate(query, { read: isRead }, { new: true });
+      if (!m && mongoose.Types.ObjectId.isValid(req.params.id)) {
+        m = await MessageModel.findByIdAndUpdate(req.params.id, { read: isRead }, { new: true });
+      }
       if (!m) return res.status(404).json({ error: 'Message not found' });
       return res.json(m);
     }
@@ -909,7 +996,10 @@ app.put('/api/messages/:id', authMiddleware, async (req, res) => {
 app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
     if (isMongoActive()) {
-      const result = await MessageModel.deleteOne({ id: req.params.id });
+      let result = await MessageModel.deleteOne({ id: req.params.id });
+      if (result.deletedCount === 0 && mongoose.Types.ObjectId.isValid(req.params.id)) {
+        result = await MessageModel.deleteOne({ _id: req.params.id });
+      }
       if (result.deletedCount === 0) return res.status(404).json({ error: 'Message not found' });
       return res.json({ success: true, message: 'Message deleted' });
     }

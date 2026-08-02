@@ -23,8 +23,10 @@ export default function About({ profile }) {
 
   const getFullImageUrl = (img) => {
     if (!img) return '';
-    if (img.startsWith('http') || img.startsWith('/uploads')) return img;
-    return `${API_BASE}/${img}`;
+    if (img.startsWith('http')) return img;
+    const normalizedImg = img.startsWith('/') ? img : `/${img}`;
+    if (!API_BASE) return normalizedImg;
+    return `${API_BASE}${normalizedImg}`;
   };
 
   return (
@@ -61,18 +63,19 @@ export default function About({ profile }) {
             </p>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="glass-card bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none">
-                <i className="fas fa-palette text-brand-light text-3xl mb-3"></i>
-                <p className="font-bold text-sm text-gray-900 dark:text-white tracking-wide">Creative Design</p>
-              </div>
-              <div className="glass-card bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none">
-                <i className="fas fa-microchip text-pink-500 dark:text-pink-400 text-3xl mb-3"></i>
-                <p className="font-bold text-sm text-gray-900 dark:text-white tracking-wide">Hardware Dev</p>
-              </div>
-              <div className="glass-card bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none">
-                <i className="fas fa-users-viewfinder text-blue-500 dark:text-blue-400 text-3xl mb-3"></i>
-                <p className="font-bold text-sm text-gray-900 dark:text-white tracking-wide">Coordination</p>
-              </div>
+              {(profile?.aboutHighlights && profile.aboutHighlights.length === 3
+                ? profile.aboutHighlights
+                : [
+                    { icon: 'fa-palette', title: 'Creative Design', color: 'text-brand-light' },
+                    { icon: 'fa-microchip', title: 'Hardware Dev', color: 'text-pink-500 dark:text-pink-400' },
+                    { icon: 'fa-users-viewfinder', title: 'Coordination', color: 'text-blue-500 dark:text-blue-400' }
+                  ]
+              ).map((hl, idx) => (
+                <div key={idx} className="glass-card bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-xl flex flex-col items-center justify-center text-center hover:bg-gray-100 dark:hover:bg-white/10 transition-colors shadow-sm dark:shadow-none">
+                  <i className={`fas ${hl.icon || 'fa-star'} ${hl.color || 'text-brand-light'} text-3xl mb-3`}></i>
+                  <p className="font-bold text-sm text-gray-900 dark:text-white tracking-wide">{hl.title}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

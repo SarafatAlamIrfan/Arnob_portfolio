@@ -4,90 +4,90 @@
     "name": "Arduino",
     "icon": "fa-solid fa-microchip",
     "color": "from-teal-500 to-emerald-400",
-    "category": "Embedded Systems"
+    "category": "technical"
   },
   {
     "id": "s_2",
     "name": "GSM Modules",
     "icon": "fa-solid fa-signal",
     "color": "from-blue-500 to-cyan-400",
-    "category": "Embedded Systems"
+    "category": "technical"
   },
   {
     "id": "s_3",
     "name": "Sensors Integration",
     "icon": "fa-solid fa-gauge",
     "color": "from-purple-500 to-indigo-400",
-    "category": "Embedded Systems"
+    "category": "technical"
   },
   {
     "id": "s_4",
     "name": "Embedded C",
     "icon": "fa-solid fa-code",
     "color": "from-orange-500 to-amber-400",
-    "category": "Embedded Systems"
+    "category": "technical"
   },
   {
     "id": "s_5",
     "name": "PIC16F690",
     "icon": "fa-solid fa-memory",
     "color": "from-red-500 to-rose-400",
-    "category": "Embedded Systems"
+    "category": "technical"
   },
   {
     "id": "s_6",
     "name": "Circuit Design",
     "icon": "fa-solid fa-bezier-curve",
     "color": "from-pink-500 to-rose-400",
-    "category": "Electronics"
+    "category": "technical"
   },
   {
     "id": "s_7",
     "name": "Schematic Capture",
     "icon": "fa-solid fa-draw-polygon",
     "color": "from-indigo-500 to-purple-400",
-    "category": "Electronics"
+    "category": "technical"
   },
   {
     "id": "s_8",
     "name": "C / C++",
     "icon": "fa-solid fa-file-code",
     "color": "from-yellow-500 to-amber-400",
-    "category": "Programming"
+    "category": "technical"
   },
   {
     "id": "s_9",
     "name": "MATLAB",
     "icon": "fa-solid fa-chart-line",
     "color": "from-orange-500 to-red-400",
-    "category": "Programming"
+    "category": "technical"
   },
   {
     "id": "s_10",
     "name": "Simulink",
     "icon": "fa-solid fa-cubes",
     "color": "from-cyan-500 to-blue-400",
-    "category": "Engineering Tools"
+    "category": "tools"
   },
   {
     "id": "s_11",
     "name": "AutoCAD",
     "icon": "fa-solid fa-compass-drafting",
     "color": "from-red-600 to-orange-500",
-    "category": "Engineering Tools"
+    "category": "tools"
   },
   {
     "id": "s_12",
     "name": "Proteus",
     "icon": "fa-solid fa-wave-square",
     "color": "from-emerald-500 to-teal-400",
-    "category": "Engineering Tools"
+    "category": "tools"
   },
   {
     "id": "s_13",
     "name": "LTspice",
     "icon": "fa-solid fa-bolt",
     "color": "from-blue-600 to-indigo-500",
-    "category": "Engineering Tools"
+    "category": "tools"
   }
 ]

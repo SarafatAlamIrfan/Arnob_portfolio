@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
-export default function Portfolio({ projects, profile }) {
+export default function Portfolio({ projects, profile, projectCategories = ['Software', 'Hardware'] }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const cardRefs = useRef([]);
 
   const filteredProjects = projects.filter((project) => {
     if (activeFilter === 'all') return true;
-    return project.category === activeFilter;
+    return project.category?.toLowerCase() === activeFilter.toLowerCase();
   });
 
   // Re-initialize VanillaTilt when the filtered list changes
@@ -36,15 +36,15 @@ export default function Portfolio({ projects, profile }) {
 
   const filterButtons = [
     { label: 'All', filter: 'all' },
-    { label: 'Web App', filter: 'web' },
-    { label: 'Applications', filter: 'app' },
-    { label: 'Hardware', filter: 'hardware' },
+    ...projectCategories.map(cat => ({ label: cat, filter: cat }))
   ];
 
   const getFullImageUrl = (img) => {
     if (!img) return '';
-    if (img.startsWith('http') || img.startsWith('/uploads')) return img;
-    return `${API_BASE}/${img}`;
+    if (img.startsWith('http')) return img;
+    const normalizedImg = img.startsWith('/') ? img : `/${img}`;
+    if (!API_BASE) return normalizedImg;
+    return `${API_BASE}${normalizedImg}`;
   };
 
   const githubUrl = profile?.socialLinks?.github || 'https://github.com';

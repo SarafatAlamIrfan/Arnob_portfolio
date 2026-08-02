@@ -19,6 +19,14 @@ export default function Lightbox({ isOpen, achievement, onClose }) {
     };
   }, [isOpen, onClose]);
 
+  const getFullImageUrl = (img) => {
+    if (!img) return '';
+    if (img.startsWith('http')) return img;
+    const normalizedImg = img.startsWith('/') ? img : `/${img}`;
+    if (!API_BASE) return normalizedImg;
+    return `${API_BASE}${normalizedImg}`;
+  };
+
   if (!isOpen || !achievement) return null;
 
   const handleModalClick = (e) => {
@@ -45,7 +53,7 @@ export default function Lightbox({ isOpen, achievement, onClose }) {
       <div className="relative max-w-[90%] max-h-[80vh] flex items-center justify-center">
         <img
           id="lightbox-img"
-          src={achievement.image.startsWith('http') ? achievement.image : `${API_BASE}/${achievement.image}`}
+          src={getFullImageUrl(achievement.image)}
           alt={achievement.title}
           className="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl scale-100 transition-all duration-300"
         />

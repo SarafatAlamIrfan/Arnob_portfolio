@@ -203,18 +203,47 @@ export default function App() {
 
   // Fallback defaults in case backend is empty
   const activeProfile = profile || {
-    name: 'Arnob',
+    name: 'Raiyan Rongon Arnob',
+    firstName: 'Raiyan Rongon',
+    lastName: 'Arnob',
+    navbarName: 'Arnob',
     title: 'Creative Designer & Hardware Innovator',
     tagline: 'Enthusiastic Tinkerer',
     bio: 'I am Arnob...',
     aboutHeading: 'About Me',
     aboutText1: 'Biography details here...',
+    aboutText2: '',
+    aboutHighlights: [
+      { icon: 'fa-palette', title: 'Creative Design', color: 'text-brand-light' },
+      { icon: 'fa-microchip', title: 'Hardware Dev', color: 'text-pink-500 dark:text-pink-400' },
+      { icon: 'fa-users-viewfinder', title: 'Coordination', color: 'text-blue-500 dark:text-blue-400' }
+    ],
     avatar: '/image/LinkedIn_HeadShot.jpg',
     coverImage: '/image/Portfolio_cover.jpg',
     email: 'arnob@example.com',
     location: 'Dhaka, Bangladesh',
     socialLinks: {},
-    typewriterTexts: ['Creative Designer', 'Innovator', 'Developer']
+    typewriterTexts: ['Creative Designer', 'Innovator', 'Developer'],
+    showSections: {
+      about: true,
+      skills: true,
+      projects: true,
+      education: true,
+      experience: true,
+      achievements: true,
+      contact: true
+    },
+    projectCategories: ['Software', 'Hardware']
+  };
+
+  const showSections = activeProfile.showSections || {
+    about: true,
+    skills: true,
+    projects: true,
+    education: true,
+    experience: true,
+    achievements: true,
+    contact: true
   };
 
   return (
@@ -242,13 +271,13 @@ export default function App() {
               
               <main>
                 <Hero profile={activeProfile} />
-                <About profile={activeProfile} />
-                <Skills skills={skills} />
-                <Portfolio projects={projects} profile={activeProfile} />
-                <Education education={education} />
-                <Experience experiences={experience} />
-                <Achievements achievements={achievements} onOpenLightbox={openLightbox} />
-                <Contact profile={activeProfile} />
+                {showSections.about !== false && <About profile={activeProfile} />}
+                {showSections.skills !== false && <Skills skills={skills} />}
+                {showSections.projects !== false && <Portfolio projects={projects} profile={activeProfile} projectCategories={activeProfile.projectCategories || ['Software', 'Hardware']} />}
+                {showSections.education !== false && <Education education={education} />}
+                {showSections.experience !== false && <Experience experiences={experience} />}
+                {showSections.achievements !== false && <Achievements achievements={achievements} onOpenLightbox={openLightbox} />}
+                {showSections.contact !== false && <Contact profile={activeProfile} />}
               </main>
 
               <Footer profile={activeProfile} />

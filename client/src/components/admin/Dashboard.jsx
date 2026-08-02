@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
@@ -24,7 +24,7 @@ export default function Dashboard({ token, onLogout }) {
   const [editingExp, setEditingExp] = useState(null);
 
   // New item modal/form states
-  const [newProject, setNewProject] = useState({ title: '', description: '', category: 'web', link: '', linkLabel: 'View Project', image: '' });
+  const [newProject, setNewProject] = useState({ title: '', description: '', category: 'Software', link: '', linkLabel: 'View Project', image: '' });
   const [newAchievement, setNewAchievement] = useState({ title: '', description: '', image: '' });
   const [newSkill, setNewSkill] = useState({ name: '', icon: 'fa-solid fa-code', color: 'text-brand-light', category: 'technical' });
   const [newEdu, setNewEdu] = useState({ degree: '', institution: '', timeline: '', details: '' });
@@ -33,67 +33,71 @@ export default function Dashboard({ token, onLogout }) {
   // Upload progress states
   const [uploadingField, setUploadingField] = useState(null); // 'avatar', 'coverImage', etc.
 
+  const defaultProfile = {
+    name: 'Raiyan Rongon Arnob',
+    firstName: 'Raiyan Rongon',
+    lastName: 'Arnob',
+    navbarName: 'Arnob',
+    title: 'Creative Designer & Hardware Innovator',
+    tagline: 'Enthusiastic Tinkerer',
+    bio: 'I am Arnob...',
+    aboutHeading: 'About Me',
+    aboutText1: 'Biography details here...',
+    aboutText2: '',
+    aboutHighlights: [
+      { icon: 'fa-palette', title: 'Creative Design', color: 'text-brand-light' },
+      { icon: 'fa-microchip', title: 'Hardware Dev', color: 'text-pink-500 dark:text-pink-400' },
+      { icon: 'fa-users-viewfinder', title: 'Coordination', color: 'text-blue-500 dark:text-blue-400' }
+    ],
+    aboutHeading: 'About Me',
+    aboutText1: 'Biography details here...',
+    aboutText2: '',
+    avatar: '/image/LinkedIn_HeadShot.jpg',
+    coverImage: '/image/Portfolio_cover.jpg',
+    email: 'arnob@example.com',
+    location: 'Dhaka, Bangladesh',
+    socialLinks: {
+      github: '',
+      linkedin: '',
+      facebook: '',
+      instagram: '',
+      twitter: ''
+    },
+    typewriterTexts: [],
+    showSections: {
+      about: true,
+      skills: true,
+      projects: true,
+      education: true,
+      experience: true,
+      achievements: true,
+      contact: true
+    }
+  };
+
   // Fetch all initial data
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const headers = { 'Authorization': `Bearer ${token}` };
 
-      // Profile
-      const profileRes = await fetch(`${API_BASE}/api/profile`);
-      if (profileRes.ok) {
-        const profileData = await profileRes.json();
-        if (profileData && !profileData.error) {
-          setProfile(profileData);
-        }
+      // 1. Fetch public portfolio data in a single request
+      const portfolioRes = await fetch(`${API_BASE}/api/portfolio-data`);
+      if (portfolioRes.ok) {
+        const data = await portfolioRes.json();
+        setProfile(data.profile || defaultProfile);
+        setSkills(data.skills || []);
+        setProjects(data.projects || []);
+        setAchievements(data.achievements || []);
+        setEducation(data.education || []);
+        setExperience(data.experience || []);
+      } else {
+        // Fallback to defaults to prevent hanging loader screen
+        setProfile(defaultProfile);
+        showStatus('error', 'Database offline. Loaded local defaults.');
       }
 
-      // Projects
-      const projectsRes = await fetch(`${API_BASE}/api/projects`);
-      if (projectsRes.ok) {
-        const projectsData = await projectsRes.json();
-        if (Array.isArray(projectsData)) {
-          setProjects(projectsData);
-        }
-      }
-
-      // Achievements
-      const achievementsRes = await fetch(`${API_BASE}/api/achievements`);
-      if (achievementsRes.ok) {
-        const achievementsData = await achievementsRes.json();
-        if (Array.isArray(achievementsData)) {
-          setAchievements(achievementsData);
-        }
-      }
-
-      // Skills
-      const skillsRes = await fetch(`${API_BASE}/api/skills`);
-      if (skillsRes.ok) {
-        const skillsData = await skillsRes.json();
-        if (Array.isArray(skillsData)) {
-          setSkills(skillsData);
-        }
-      }
-
-      // Education
-      const eduRes = await fetch(`${API_BASE}/api/education`);
-      if (eduRes.ok) {
-        const eduData = await eduRes.json();
-        if (Array.isArray(eduData)) {
-          setEducation(eduData);
-        }
-      }
-
-      // Experience
-      const expRes = await fetch(`${API_BASE}/api/experience`);
-      if (expRes.ok) {
-        const expData = await expRes.json();
-        if (Array.isArray(expData)) {
-          setExperience(expData);
-        }
-      }
-
-      // Messages
+      // 2. Fetch admin messages in a separate request
       const msgRes = await fetch(`${API_BASE}/api/messages`, { headers });
       if (msgRes.ok) {
         const msgData = await msgRes.json();
@@ -103,15 +107,16 @@ export default function Dashboard({ token, onLogout }) {
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      showStatus('error', 'Failed to load portfolio database.');
+      setProfile(defaultProfile);
+      showStatus('error', 'Failed to connect to backend server. Loaded local defaults.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchData();
-  }, [token]);
+  }, [fetchData]);
 
   const showStatus = (type, text) => {
     setMessage({ type, text });
@@ -154,16 +159,21 @@ export default function Dashboard({ token, onLogout }) {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     try {
+      const profileToSave = {
+        ...profile,
+        name: `${profile.firstName || ''} ${profile.lastName || ''}`.trim()
+      };
       const res = await fetch(`${API_BASE}/api/profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(profile),
+        body: JSON.stringify(profileToSave),
       });
 
       if (res.ok) {
+        setProfile(profileToSave);
         showStatus('success', 'Profile saved successfully!');
       } else {
         showStatus('error', 'Failed to save profile changes.');
@@ -190,8 +200,11 @@ export default function Dashboard({ token, onLogout }) {
       if (res.ok) {
         const added = await res.json();
         setProjects([...projects, added]);
-        setNewProject({ title: '', description: '', category: 'web', link: '', linkLabel: 'View Project', image: '' });
+        setNewProject({ title: '', description: '', category: 'Software', link: '', linkLabel: 'View Project', image: '' });
         showStatus('success', 'Project added successfully!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to add project');
       }
     } catch (err) {
       console.error(err);
@@ -216,6 +229,9 @@ export default function Dashboard({ token, onLogout }) {
         setProjects(projects.map((p) => (p.id === updated.id ? updated : p)));
         setEditingProject(null);
         showStatus('success', 'Project updated successfully!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to update project');
       }
     } catch (err) {
       console.error(err);
@@ -234,6 +250,9 @@ export default function Dashboard({ token, onLogout }) {
       if (res.ok) {
         setProjects(projects.filter((p) => p.id !== id));
         showStatus('success', 'Project deleted');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to delete project');
       }
     } catch (err) {
       console.error(err);
@@ -259,6 +278,9 @@ export default function Dashboard({ token, onLogout }) {
         setAchievements([...achievements, added]);
         setNewAchievement({ title: '', description: '', image: '' });
         showStatus('success', 'Achievement added successfully!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to add achievement');
       }
     } catch (err) {
       console.error(err);
@@ -283,6 +305,9 @@ export default function Dashboard({ token, onLogout }) {
         setAchievements(achievements.map((a) => (a.id === updated.id ? updated : a)));
         setEditingAchievement(null);
         showStatus('success', 'Achievement updated successfully!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to update achievement');
       }
     } catch (err) {
       console.error(err);
@@ -301,6 +326,9 @@ export default function Dashboard({ token, onLogout }) {
       if (res.ok) {
         setAchievements(achievements.filter((a) => a.id !== id));
         showStatus('success', 'Achievement deleted');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to delete achievement');
       }
     } catch (err) {
       console.error(err);
@@ -326,6 +354,9 @@ export default function Dashboard({ token, onLogout }) {
         setSkills([...skills, added]);
         setNewSkill({ name: '', icon: 'fa-solid fa-code', color: 'text-brand-light', category: 'technical' });
         showStatus('success', 'Skill added!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to add skill');
       }
     } catch (err) {
       console.error(err);
@@ -350,6 +381,9 @@ export default function Dashboard({ token, onLogout }) {
         setSkills(skills.map((s) => (s.id === updated.id ? updated : s)));
         setEditingSkill(null);
         showStatus('success', 'Skill updated!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to update skill');
       }
     } catch (err) {
       console.error(err);
@@ -368,6 +402,9 @@ export default function Dashboard({ token, onLogout }) {
       if (res.ok) {
         setSkills(skills.filter((s) => s.id !== id));
         showStatus('success', 'Skill deleted');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to delete skill');
       }
     } catch (err) {
       console.error(err);
@@ -393,6 +430,9 @@ export default function Dashboard({ token, onLogout }) {
         setEducation([...education, added]);
         setNewEdu({ degree: '', institution: '', timeline: '', details: '' });
         showStatus('success', 'Education entry added!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to add education entry');
       }
     } catch (err) {
       console.error(err);
@@ -417,6 +457,9 @@ export default function Dashboard({ token, onLogout }) {
         setEducation(education.map((e) => (e.id === updated.id ? updated : e)));
         setEditingEdu(null);
         showStatus('success', 'Education entry updated!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to update education entry');
       }
     } catch (err) {
       console.error(err);
@@ -435,6 +478,9 @@ export default function Dashboard({ token, onLogout }) {
       if (res.ok) {
         setEducation(education.filter((e) => e.id !== id));
         showStatus('success', 'Education item deleted');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to delete education item');
       }
     } catch (err) {
       console.error(err);
@@ -459,6 +505,9 @@ export default function Dashboard({ token, onLogout }) {
         setExperience([...experience, added]);
         setNewExp({ role: '', company: '', timeline: '', details: '' });
         showStatus('success', 'Experience entry added!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to add experience entry');
       }
     } catch (err) {
       console.error(err);
@@ -483,6 +532,9 @@ export default function Dashboard({ token, onLogout }) {
         setExperience(experience.map((ex) => (ex.id === updated.id ? updated : ex)));
         setEditingExp(null);
         showStatus('success', 'Experience entry updated!');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to update experience entry');
       }
     } catch (err) {
       console.error(err);
@@ -501,6 +553,9 @@ export default function Dashboard({ token, onLogout }) {
       if (res.ok) {
         setExperience(experience.filter((ex) => ex.id !== id));
         showStatus('success', 'Experience item deleted');
+      } else {
+        const data = await res.json();
+        showStatus('error', data.error || 'Failed to delete experience item');
       }
     } catch (err) {
       console.error(err);
@@ -522,7 +577,11 @@ export default function Dashboard({ token, onLogout }) {
 
       if (res.ok) {
         const updated = await res.json();
-        setMessages(messages.map((m) => (m.id === updated.id ? updated : m)));
+        setMessages(messages.map((m) => {
+          const targetId = m.id || m._id;
+          const updatedId = updated.id || updated._id;
+          return targetId === updatedId ? updated : m;
+        }));
       }
     } catch (err) {
       console.error(err);
@@ -538,7 +597,7 @@ export default function Dashboard({ token, onLogout }) {
       });
 
       if (res.ok) {
-        setMessages(messages.filter((m) => m.id !== id));
+        setMessages(messages.filter((m) => (m.id || m._id) !== id));
         showStatus('success', 'Message deleted from inbox');
       }
     } catch (err) {
@@ -549,8 +608,10 @@ export default function Dashboard({ token, onLogout }) {
 
   const getFullImageUrl = (img) => {
     if (!img) return '';
-    if (img.startsWith('http') || img.startsWith('/uploads')) return img;
-    return `${API_BASE}/${img}`;
+    if (img.startsWith('http')) return img;
+    const normalizedImg = img.startsWith('/') ? img : `/${img}`;
+    if (!API_BASE) return normalizedImg;
+    return `${API_BASE}${normalizedImg}`;
   };
 
   if (!profile) {
@@ -565,10 +626,10 @@ export default function Dashboard({ token, onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
+    <div className="min-h-screen md:h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row md:overflow-hidden">
       
       {/* Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <aside className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between shrink-0 md:overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-md">
@@ -668,26 +729,47 @@ export default function Dashboard({ token, onLogout }) {
                 <i className="fa-solid fa-id-card text-purple-500"></i> Hero Section Settings
               </h3>
 
-              <div className="grid sm:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Full Name</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">First Name</label>
                   <input
                     type="text"
-                    value={profile.name}
-                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    value={profile.firstName || ''}
+                    onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Professional Title</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Last Name</label>
                   <input
                     type="text"
-                    value={profile.title}
-                    onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+                    value={profile.lastName || ''}
+                    onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
                     className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                    required
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Navbar Name</label>
+                  <input
+                    type="text"
+                    value={profile.navbarName || ''}
+                    onChange={(e) => setProfile({ ...profile, navbarName: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Professional Title</label>
+                <input
+                  type="text"
+                  value={profile.title}
+                  onChange={(e) => setProfile({ ...profile, title: e.target.value })}
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                />
               </div>
 
               <div>
@@ -697,6 +779,17 @@ export default function Dashboard({ token, onLogout }) {
                   onChange={(e) => setProfile({ ...profile, tagline: e.target.value })}
                   rows="2"
                   className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Biography Description (Hero Section)</label>
+                <textarea
+                  value={profile.bio || ''}
+                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                  rows="4"
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                  placeholder="Hero introduction biography text..."
                 ></textarea>
               </div>
 
@@ -747,6 +840,114 @@ export default function Dashboard({ token, onLogout }) {
                   className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
                   placeholder="Software Innovator, Creative Designer, Hardware Enthusiast"
                 />
+              </div>
+            </div>
+
+            {/* About Page Biography Details Card */}
+            <div className="glass-card bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-6">
+              <h3 className="text-xl font-bold text-white mb-4 border-b border-slate-800 pb-3 flex items-center gap-3">
+                <i className="fa-solid fa-address-card text-purple-500"></i> About Page Biography Details
+              </h3>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Biography Heading</label>
+                <input
+                  type="text"
+                  value={profile.aboutHeading || ''}
+                  onChange={(e) => setProfile({ ...profile, aboutHeading: e.target.value })}
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                  placeholder="e.g. A Passionate Tech Prototyper"
+                />
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Biography Paragraph 1</label>
+                  <textarea
+                    value={profile.aboutText1 || ''}
+                    onChange={(e) => setProfile({ ...profile, aboutText1: e.target.value })}
+                    rows="4"
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                    placeholder="First biography paragraph..."
+                  ></textarea>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Biography Paragraph 2</label>
+                  <textarea
+                    value={profile.aboutText2 || ''}
+                    onChange={(e) => setProfile({ ...profile, aboutText2: e.target.value })}
+                    rows="4"
+                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
+                    placeholder="Second biography paragraph..."
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Highlights cards editor */}
+              <div className="border-t border-slate-800 pt-6">
+                <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Highlights Cards (3 Columns)</h4>
+                <div className="grid sm:grid-cols-3 gap-6">
+                  {Array.from({ length: 3 }).map((_, idx) => {
+                    const highlight = (profile.aboutHighlights || [])[idx] || { icon: '', title: '', color: '' };
+                    return (
+                      <div key={idx} className="bg-slate-950/40 p-4 border border-slate-850 rounded-2xl space-y-4">
+                        <span className="block text-xs font-bold text-purple-400 uppercase tracking-wider">Card {idx + 1}</span>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Title</label>
+                          <input
+                            type="text"
+                            value={highlight.title || ''}
+                            onChange={(e) => {
+                              const newHighlights = [...(profile.aboutHighlights || [])];
+                              newHighlights[idx] = { ...highlight, title: e.target.value };
+                              setProfile({ ...profile, aboutHighlights: newHighlights });
+                            }}
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-purple-500"
+                            placeholder="e.g. Creative Design"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">FontAwesome Icon Class</label>
+                          <input
+                            type="text"
+                            value={highlight.icon || ''}
+                            onChange={(e) => {
+                              const newHighlights = [...(profile.aboutHighlights || [])];
+                              newHighlights[idx] = { ...highlight, icon: e.target.value };
+                              setProfile({ ...profile, aboutHighlights: newHighlights });
+                            }}
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-purple-500"
+                            placeholder="e.g. fa-palette"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Theme Color</label>
+                          <select
+                            value={highlight.color || 'text-brand-light'}
+                            onChange={(e) => {
+                              const newHighlights = [...(profile.aboutHighlights || [])];
+                              newHighlights[idx] = { ...highlight, color: e.target.value };
+                              setProfile({ ...profile, aboutHighlights: newHighlights });
+                            }}
+                            className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-purple-500"
+                          >
+                            <option value="text-brand-light">Purple Accent</option>
+                            <option value="text-pink-500 dark:text-pink-400">Pink Accent</option>
+                            <option value="text-blue-500 dark:text-blue-400">Blue Accent</option>
+                            <option value="text-purple-500">Solid Purple</option>
+                            <option value="text-pink-500">Solid Pink</option>
+                            <option value="text-blue-500">Solid Blue</option>
+                            <option value="text-teal-500">Solid Teal</option>
+                            <option value="text-yellow-500">Solid Yellow</option>
+                            <option value="text-green-500">Solid Green</option>
+                            <option value="text-orange-500">Solid Orange</option>
+                            <option value="text-red-500">Solid Red</option>
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -861,6 +1062,54 @@ export default function Dashboard({ token, onLogout }) {
               </div>
             </div>
 
+            <div className="glass-card bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-6">
+              <h3 className="text-xl font-bold text-white mb-4 border-b border-slate-800 pb-3 flex items-center gap-3">
+                <i className="fa-solid fa-toggle-on text-purple-500"></i> Section Visibility Controls
+              </h3>
+              <p className="text-xs text-slate-400 -mt-2">Turn individual landing page sections on or off dynamically.</p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { id: 'about', label: 'About Me Section' },
+                  { id: 'skills', label: 'Skills Section' },
+                  { id: 'projects', label: 'Projects Section' },
+                  { id: 'education', label: 'Education Section' },
+                  { id: 'experience', label: 'Experience Section' },
+                  { id: 'achievements', label: 'Achievements Section' },
+                  { id: 'contact', label: 'Contact Form Section' }
+                ].map((sec) => {
+                  const isShown = (profile.showSections && profile.showSections[sec.id]) !== false;
+                  return (
+                    <div key={sec.id} className="flex items-center justify-between p-4 bg-slate-950 border border-slate-850 rounded-xl hover:border-slate-800 transition-colors">
+                      <span className="text-sm font-semibold text-slate-300">{sec.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newShowSections = {
+                            about: true,
+                            skills: true,
+                            projects: true,
+                            education: true,
+                            experience: true,
+                            achievements: true,
+                            contact: true,
+                            ...profile.showSections
+                          };
+                          newShowSections[sec.id] = !isShown;
+                          setProfile({ ...profile, showSections: newShowSections });
+                        }}
+                        className={`w-12 h-6 flex items-center rounded-full p-1 transition-all duration-300 ${
+                          isShown ? 'bg-purple-600 justify-end' : 'bg-slate-800 justify-start'
+                        }`}
+                      >
+                        <div className="bg-white w-4 h-4 rounded-full shadow-md transform transition-all duration-300"></div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex justify-end pt-4">
               <button
                 type="submit"
@@ -876,6 +1125,106 @@ export default function Dashboard({ token, onLogout }) {
         {/* --- TAB 2: PROJECTS --- */}
         {activeTab === 'projects' && (
           <div className="space-y-10">
+            {/* Manage Project Categories */}
+            <div className="glass-card bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl">
+              <h3 className="text-xl font-bold text-white mb-6 border-b border-slate-800 pb-3 flex items-center gap-3">
+                <i className="fa-solid fa-tags text-purple-500"></i> Manage Project Categories
+              </h3>
+              
+              <div className="flex flex-wrap gap-2 mb-6">
+                {(profile.projectCategories || ['Software', 'Hardware']).map((cat) => (
+                  <div key={cat} className="flex items-center gap-2 px-3 py-1.5 bg-slate-950 border border-slate-850 rounded-lg">
+                    <span className="text-sm font-semibold text-slate-300">{cat}</span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (window.confirm(`Delete category "${cat}"? This will not delete the projects under it.`)) {
+                          const newCats = (profile.projectCategories || ['Software', 'Hardware']).filter(c => c !== cat);
+                          const updatedProfile = { ...profile, projectCategories: newCats };
+                          setProfile(updatedProfile);
+                          
+                          try {
+                            const res = await fetch(`${API_BASE}/api/profile`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                              },
+                              body: JSON.stringify(updatedProfile),
+                            });
+                            if (res.ok) {
+                              showStatus('success', `Category "${cat}" deleted`);
+                            } else {
+                              showStatus('error', 'Failed to save profile changes.');
+                            }
+                          } catch (err) {
+                            showStatus('error', 'Network error while saving changes.');
+                          }
+                        }
+                      }}
+                      className="text-red-450 hover:text-red-300 transition-colors"
+                      title="Delete Category"
+                    >
+                      <i className="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <form 
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const input = e.target.elements.newCategoryName;
+                  const catName = input.value.trim();
+                  if (!catName) return;
+                  
+                  const currentCats = profile.projectCategories || ['Software', 'Hardware'];
+                  if (currentCats.map(c => c.toLowerCase()).includes(catName.toLowerCase())) {
+                    showStatus('error', 'Category already exists!');
+                    return;
+                  }
+                  
+                  const newCats = [...currentCats, catName];
+                  const updatedProfile = { ...profile, projectCategories: newCats };
+                  setProfile(updatedProfile);
+                  input.value = '';
+                  
+                  try {
+                    const res = await fetch(`${API_BASE}/api/profile`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
+                      body: JSON.stringify(updatedProfile),
+                    });
+                    if (res.ok) {
+                      showStatus('success', `Category "${catName}" added`);
+                    } else {
+                      showStatus('error', 'Failed to save profile changes.');
+                    }
+                  } catch (err) {
+                    showStatus('error', 'Network error while saving changes.');
+                  }
+                }} 
+                className="flex gap-3"
+              >
+                <input
+                  type="text"
+                  name="newCategoryName"
+                  required
+                  placeholder="e.g. Research, Web App, Aerospace"
+                  className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-sm transition-all"
+                >
+                  Add Category
+                </button>
+              </form>
+            </div>
+
             {/* Add Project Form */}
             <div className="glass-card bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl">
               <h3 className="text-xl font-bold text-white mb-6 border-b border-slate-800 pb-3 flex items-center gap-3">
@@ -900,15 +1249,15 @@ export default function Dashboard({ token, onLogout }) {
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Project Category</label>
                     <select
-                      value={editingProject ? editingProject.category : newProject.category}
+                      value={editingProject ? editingProject.category : (newProject.category || (profile.projectCategories?.[0] || 'Software'))}
                       onChange={(e) => editingProject 
                         ? setEditingProject({ ...editingProject, category: e.target.value })
                         : setNewProject({ ...newProject, category: e.target.value })}
                       className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
                     >
-                      <option value="web">Web App</option>
-                      <option value="app">Application</option>
-                      <option value="hardware">Hardware / Robotics</option>
+                      {(profile.projectCategories || ['Software', 'Hardware']).map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -1041,7 +1390,10 @@ export default function Dashboard({ token, onLogout }) {
                       </a>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setEditingProject(project)}
+                          onClick={() => {
+                            setEditingProject(project);
+                            document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
                           className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"
                           title="Edit Project"
                         >
@@ -1183,7 +1535,10 @@ export default function Dashboard({ token, onLogout }) {
 
                     <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-800/80">
                       <button
-                        onClick={() => setEditingAchievement(ach)}
+                        onClick={() => {
+                          setEditingAchievement(ach);
+                          document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                         className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"
                       >
                         <i className="fa-solid fa-pencil"></i>
@@ -1295,17 +1650,20 @@ export default function Dashboard({ token, onLogout }) {
               {/* Technical Group */}
               <div className="glass-card bg-slate-900 border border-slate-800 p-6 rounded-3xl">
                 <h4 className="font-bold text-lg text-white mb-6 flex items-center gap-2">
-                  <i className="fa-solid fa-laptop-code text-purple-500"></i> Technical Stack ({skills.filter(s => s.category === 'technical').length})
+                  <i className="fa-solid fa-laptop-code text-purple-500"></i> Technical Stack ({skills.filter(s => ['technical', 'Embedded Systems', 'Electronics', 'Programming'].includes(s.category)).length})
                 </h4>
                 <div className="space-y-2">
-                  {skills.filter(s => s.category === 'technical').map(skill => (
+                  {skills.filter(s => ['technical', 'Embedded Systems', 'Electronics', 'Programming'].includes(s.category)).map(skill => (
                     <div key={skill.id} className="flex items-center justify-between p-3 bg-slate-950/60 border border-slate-850 rounded-xl">
                       <div className="flex items-center gap-3">
                         <i className={`${skill.icon} text-lg text-purple-400`}></i>
                         <span className="text-sm font-semibold">{skill.name}</span>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => setEditingSkill(skill)} className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded transition-all"><i className="fa-solid fa-pencil text-xs"></i></button>
+                        <button onClick={() => {
+                          setEditingSkill(skill);
+                          document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                        }} className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded transition-all"><i className="fa-solid fa-pencil text-xs"></i></button>
                         <button onClick={() => handleDeleteSkill(skill.id)} className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-all"><i className="fa-solid fa-trash text-xs"></i></button>
                       </div>
                     </div>
@@ -1316,17 +1674,20 @@ export default function Dashboard({ token, onLogout }) {
               {/* Tools & Engineering Group */}
               <div className="glass-card bg-slate-900 border border-slate-800 p-6 rounded-3xl">
                 <h4 className="font-bold text-lg text-white mb-6 flex items-center gap-2">
-                  <i className="fa-solid fa-toolbox text-pink-500"></i> Tools & Engineering ({skills.filter(s => s.category === 'tools').length})
+                  <i className="fa-solid fa-toolbox text-pink-500"></i> Tools & Engineering ({skills.filter(s => ['tools', 'Engineering Tools'].includes(s.category)).length})
                 </h4>
                 <div className="space-y-2">
-                  {skills.filter(s => s.category === 'tools').map(skill => (
+                  {skills.filter(s => ['tools', 'Engineering Tools'].includes(s.category)).map(skill => (
                     <div key={skill.id} className="flex items-center justify-between p-3 bg-slate-950/60 border border-slate-850 rounded-xl">
                       <div className="flex items-center gap-3">
                         <i className={`${skill.icon} text-lg text-pink-400`}></i>
                         <span className="text-sm font-semibold">{skill.name}</span>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => setEditingSkill(skill)} className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded transition-all"><i className="fa-solid fa-pencil text-xs"></i></button>
+                        <button onClick={() => {
+                          setEditingSkill(skill);
+                          document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                        }} className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded transition-all"><i className="fa-solid fa-pencil text-xs"></i></button>
                         <button onClick={() => handleDeleteSkill(skill.id)} className="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-all"><i className="fa-solid fa-trash text-xs"></i></button>
                       </div>
                     </div>
@@ -1437,7 +1798,10 @@ export default function Dashboard({ token, onLogout }) {
                       {edu.details && <p className="text-slate-400 text-xs mt-2 font-light leading-relaxed">{edu.details}</p>}
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => setEditingEdu(edu)} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-pencil"></i></button>
+                       <button onClick={() => {
+                         setEditingEdu(edu);
+                         document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                       }} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-pencil"></i></button>
                       <button onClick={() => handleDeleteEdu(edu.id)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-trash"></i></button>
                     </div>
                   </div>
@@ -1542,7 +1906,10 @@ export default function Dashboard({ token, onLogout }) {
                       <p className="text-slate-400 text-xs mt-2 font-light leading-relaxed">{exp.details}</p>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => setEditingExp(exp)} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-pencil"></i></button>
+                       <button onClick={() => {
+                         setEditingExp(exp);
+                         document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+                       }} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-pencil"></i></button>
                       <button onClick={() => handleDeleteExp(exp.id)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-trash"></i></button>
                     </div>
                   </div>
@@ -1577,7 +1944,7 @@ export default function Dashboard({ token, onLogout }) {
               <div className="space-y-4">
                 {messages.map((msg) => (
                   <div
-                    key={msg.id}
+                    key={msg.id || msg._id}
                     className={`glass-card p-6 border rounded-2xl flex flex-col justify-between transition-all ${
                       msg.read
                         ? 'bg-slate-900/50 border-slate-800 text-slate-300'
@@ -1605,7 +1972,7 @@ export default function Dashboard({ token, onLogout }) {
 
                     <div className="flex justify-end gap-3 pt-3 border-t border-slate-800/60">
                       <button
-                        onClick={() => handleToggleReadMessage(msg.id, msg.read)}
+                        onClick={() => handleToggleReadMessage(msg.id || msg._id, msg.read)}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                           msg.read
                             ? 'bg-slate-800 hover:bg-slate-700 text-slate-300'
@@ -1616,7 +1983,7 @@ export default function Dashboard({ token, onLogout }) {
                         Mark {msg.read ? 'Unread' : 'Read'}
                       </button>
                       <button
-                        onClick={() => handleDeleteMessage(msg.id)}
+                        onClick={() => handleDeleteMessage(msg.id || msg._id)}
                         className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white text-xs font-semibold rounded-lg transition-all"
                       >
                         <i className="fa-solid fa-trash mr-1.5"></i>

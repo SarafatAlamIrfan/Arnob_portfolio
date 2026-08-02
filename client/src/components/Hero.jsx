@@ -46,8 +46,10 @@ export default function Hero({ profile }) {
 
   const getFullImageUrl = (img) => {
     if (!img) return '';
-    if (img.startsWith('http') || img.startsWith('/uploads')) return img;
-    return `${API_BASE}/${img}`;
+    if (img.startsWith('http')) return img;
+    const normalizedImg = img.startsWith('/') ? img : `/${img}`;
+    if (!API_BASE) return normalizedImg;
+    return `${API_BASE}${normalizedImg}`;
   };
 
   const socialLinks = profile?.socialLinks || {};
@@ -65,7 +67,10 @@ export default function Hero({ profile }) {
             
             <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight mb-4 text-gray-900 dark:text-white">
               Hi, I'm <br/>
-              <span className="text-gradient">{profile?.name || 'Arnob'}</span>
+              <span className="text-gradient">
+                {profile?.firstName || 'Raiyan Rongon'}{' '}
+                {profile?.lastName || 'Arnob'}
+              </span>
             </h1>
             
             <h2 className="text-2xl sm:text-3xl font-medium text-gray-600 dark:text-gray-400 mb-6 h-10">

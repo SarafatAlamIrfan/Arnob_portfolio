@@ -47,14 +47,16 @@ export default function Navbar({ isDark, onToggleTheme, profile }) {
             ))}
             
             {/* CV Button (Desktop) */}
-            <a
-              href="/Sarafat_CV.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 text-sm font-bold text-gray-900 dark:text-white glass-card bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all flex items-center gap-2 shadow-sm transform hover:scale-105"
-            >
-              <i className="fa-solid fa-file-pdf text-brand-light"></i> View CV
-            </a>
+            {showSections.cv !== false && (
+              <a
+                href="/Sarafat_CV.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 text-sm font-bold text-gray-900 dark:text-white glass-card bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all flex items-center gap-2 shadow-sm transform hover:scale-105"
+              >
+                <i className="fa-solid fa-file-pdf text-brand-light"></i> View CV
+              </a>
+            )}
 
             {/* Theme Toggle Button */}
             <button
@@ -102,16 +104,18 @@ export default function Navbar({ isDark, onToggleTheme, profile }) {
           ))}
           
           {/* CV Button (Mobile) */}
-          <div className="pt-2">
-            <a
-              href="/Sarafat_CV.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-gray-900 dark:text-white glass-card bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg shadow-sm active:scale-95 transition-transform"
-            >
-              <i className="fa-solid fa-file-pdf text-brand-light"></i> View CV
-            </a>
-          </div>
+          {showSections.cv !== false && (
+            <div className="pt-2">
+              <a
+                href="/Sarafat_CV.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-gray-900 dark:text-white glass-card bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg shadow-sm active:scale-95 transition-transform"
+              >
+                <i className="fa-solid fa-file-pdf text-brand-light"></i> View CV
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </nav>

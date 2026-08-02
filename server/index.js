@@ -381,7 +381,8 @@ const fetchProfileData = async () => {
       education: true,
       experience: true,
       achievements: true,
-      contact: true
+      contact: true,
+      cv: true
     },
     projectCategories: ['Software', 'Hardware']
   };

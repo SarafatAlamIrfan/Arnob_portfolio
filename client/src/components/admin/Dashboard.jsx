@@ -71,7 +71,8 @@ export default function Dashboard({ token, onLogout }) {
       education: true,
       experience: true,
       achievements: true,
-      contact: true
+      contact: true,
+      cv: true
     }
   };
 
@@ -1076,7 +1077,8 @@ export default function Dashboard({ token, onLogout }) {
                   { id: 'education', label: 'Education Section' },
                   { id: 'experience', label: 'Experience Section' },
                   { id: 'achievements', label: 'Achievements Section' },
-                  { id: 'contact', label: 'Contact Form Section' }
+                  { id: 'contact', label: 'Contact Form Section' },
+                  { id: 'cv', label: 'Download CV button' }
                 ].map((sec) => {
                   const isShown = (profile.showSections && profile.showSections[sec.id]) !== false;
                   return (
@@ -1093,6 +1095,7 @@ export default function Dashboard({ token, onLogout }) {
                             experience: true,
                             achievements: true,
                             contact: true,
+                            cv: true,
                             ...profile.showSections
                           };
                           newShowSections[sec.id] = !isShown;

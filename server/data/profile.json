@@ -29,7 +29,8 @@
     "education": true,
     "experience": true,
     "achievements": false,
-    "contact": true
+    "contact": true,
+    "cv": true
   },
   "projectCategories": [
     "Software",

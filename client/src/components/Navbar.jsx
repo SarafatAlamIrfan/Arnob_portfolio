@@ -7,6 +7,15 @@ export default function Navbar({ isDark, onToggleTheme, profile }) {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const API_BASE = import.meta.env.VITE_API_URL || '';
+  const getFullImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+    const cleanUrl = url.startsWith('/') ? url : '/' + url;
+    return `${cleanBase}${cleanUrl}`;
+  };
+
   const showSections = profile?.showSections || {
     about: true,
     skills: true,
@@ -49,7 +58,7 @@ export default function Navbar({ isDark, onToggleTheme, profile }) {
             {/* CV Button (Desktop) */}
             {showSections.cv !== false && (
               <a
-                href="/Sarafat_CV.pdf"
+                href={getFullImageUrl(profile?.cvUrl || '/Sarafat_CV.pdf')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-2 text-sm font-bold text-gray-900 dark:text-white glass-card bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all flex items-center gap-2 shadow-sm transform hover:scale-105"
@@ -107,7 +116,7 @@ export default function Navbar({ isDark, onToggleTheme, profile }) {
           {showSections.cv !== false && (
             <div className="pt-2">
               <a
-                href="/Sarafat_CV.pdf"
+                href={getFullImageUrl(profile?.cvUrl || '/Sarafat_CV.pdf')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-gray-900 dark:text-white glass-card bg-white/60 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg shadow-sm active:scale-95 transition-transform"

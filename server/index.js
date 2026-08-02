@@ -54,6 +54,7 @@ const profileSchema = new mongoose.Schema({
   aboutHighlights: mongoose.Schema.Types.Mixed,
   avatar: String,
   coverImage: String,
+  cvUrl: String,
   email: String,
   location: String,
   socialLinks: mongoose.Schema.Types.Mixed,
@@ -155,13 +156,13 @@ const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|webp|gif|svg/;
+    const filetypes = /jpeg|jpg|png|webp|gif|svg|pdf/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    const mimetype = filetypes.test(file.mimetype) || file.mimetype === 'application/pdf';
     if (mimetype && extname) {
       return cb(null, true);
     }
-    cb(new Error('Only images (jpg, jpeg, png, webp, gif, svg) are allowed'));
+    cb(new Error('Only images (jpg, jpeg, png, webp, gif, svg) and PDF documents are allowed'));
   },
 });
 
@@ -376,6 +377,7 @@ const fetchProfileData = async () => {
     ],
     avatar: '/image/LinkedIn_HeadShot.jpg',
     coverImage: '/image/Portfolio_cover.jpg',
+    cvUrl: '/Sarafat_CV.pdf',
     email: 'arnob@example.com',
     location: 'Dhaka, Bangladesh',
     socialLinks: {},
@@ -1034,7 +1036,7 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
 app.post('/api/upload', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No image file uploaded' });
+      return res.status(400).json({ error: 'No file uploaded' });
     }
 
     // Cloudinary upload

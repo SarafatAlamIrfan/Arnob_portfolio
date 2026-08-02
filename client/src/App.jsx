@@ -220,6 +220,7 @@ export default function App() {
     ],
     avatar: '/image/LinkedIn_HeadShot.jpg',
     coverImage: '/image/Portfolio_cover.jpg',
+    cvUrl: '/Sarafat_CV.pdf',
     email: 'arnob@example.com',
     location: 'Dhaka, Bangladesh',
     socialLinks: {},

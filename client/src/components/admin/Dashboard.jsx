@@ -54,6 +54,7 @@ export default function Dashboard({ token, onLogout }) {
     aboutText2: '',
     avatar: '/image/LinkedIn_HeadShot.jpg',
     coverImage: '/image/Portfolio_cover.jpg',
+    cvUrl: '/Sarafat_CV.pdf',
     email: 'arnob@example.com',
     location: 'Dhaka, Bangladesh',
     socialLinks: {
@@ -795,7 +796,7 @@ export default function Dashboard({ token, onLogout }) {
                 ></textarea>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-3 gap-6">
                 {/* Profile Photo Upload */}
                 <div className="bg-slate-950/50 p-4 border border-slate-800/80 rounded-2xl flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-800 shrink-0 bg-slate-900">
@@ -820,7 +821,7 @@ export default function Dashboard({ token, onLogout }) {
                     <img src={getFullImageUrl(profile.coverImage)} className="w-full h-full object-cover" alt="Cover" />
                   </div>
                   <div className="flex-1">
-                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">About Page Cover Image</span>
+                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">About Cover Image</span>
                     <input
                       type="file"
                       name="coverImage"
@@ -829,6 +830,30 @@ export default function Dashboard({ token, onLogout }) {
                       className="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600/20 file:text-purple-400 hover:file:bg-purple-600/30 file:cursor-pointer"
                     />
                     {uploadingField === 'coverImage' && <p className="text-[10px] text-purple-400 animate-pulse mt-1">Uploading...</p>}
+                  </div>
+                </div>
+
+                {/* CV PDF Upload */}
+                <div className="bg-slate-950/50 p-4 border border-slate-800/80 rounded-2xl flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full border border-slate-800 shrink-0 bg-slate-900 flex items-center justify-center">
+                    <i className="fa-solid fa-file-pdf text-brand-light text-3xl"></i>
+                  </div>
+                  <div className="flex-1">
+                    <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">CV PDF Document</span>
+                    <input
+                      type="file"
+                      name="cv"
+                      accept=".pdf"
+                      onChange={(e) => handleImageUpload(e, (url) => setProfile({ ...profile, cvUrl: url }))}
+                      disabled={uploadingField === 'cv'}
+                      className="text-xs text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600/20 file:text-purple-400 hover:file:bg-purple-600/30 file:cursor-pointer"
+                    />
+                    {uploadingField === 'cv' && <p className="text-[10px] text-purple-400 animate-pulse mt-1">Uploading...</p>}
+                    {profile.cvUrl && (
+                      <a href={getFullImageUrl(profile.cvUrl)} target="_blank" rel="noopener noreferrer" className="block text-[9px] text-purple-400 hover:underline mt-1 truncate max-w-[120px]">
+                        View Uploaded CV
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

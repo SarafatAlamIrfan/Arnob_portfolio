@@ -177,7 +177,8 @@ export default function Dashboard({ token, onLogout }) {
         setProfile(profileToSave);
         showStatus('success', 'Profile saved successfully!');
       } else {
-        showStatus('error', 'Failed to save profile changes.');
+        const errorData = await res.json().catch(() => ({}));
+        showStatus('error', errorData.error || 'Failed to save profile changes.');
       }
     } catch (err) {
       console.error(err);

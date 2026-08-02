@@ -450,7 +450,7 @@ app.post('/api/profile', authMiddleware, async (req, res) => {
     res.json({ success: true, message: 'Profile updated successfully!' });
   } catch (error) {
     console.error('Error saving profile:', error);
-    res.status(500).json({ error: 'Failed to save profile' });
+    res.status(500).json({ error: error.message || 'Failed to save profile' });
   }
 });
 

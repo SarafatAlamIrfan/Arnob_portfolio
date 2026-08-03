@@ -45,7 +45,7 @@ export default function Achievements({ achievements, onOpenLightbox }) {
 
   const getFullImageUrl = (img) => {
     if (!img) return '';
-    if (img.startsWith('http')) return img;
+    if (img.startsWith('http') || img.startsWith('data:')) return img;
     const normalizedImg = img.startsWith('/') ? img : `/${img}`;
     if (!API_BASE) return normalizedImg;
     return `${API_BASE}${normalizedImg}`;

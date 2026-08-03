@@ -10,7 +10,7 @@ export default function Navbar({ isDark, onToggleTheme, profile }) {
   const API_BASE = import.meta.env.VITE_API_URL || '';
   const getFullImageUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
     const cleanBase = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
     const cleanUrl = url.startsWith('/') ? url : '/' + url;
     return `${cleanBase}${cleanUrl}`;

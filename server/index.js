@@ -9,7 +9,6 @@ import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import bcryptjs from 'bcryptjs';
 import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
 import mongoose from 'mongoose';
 
 // Configure dotenv
@@ -121,26 +120,8 @@ const messageSchema = new mongoose.Schema({
 });
 const MessageModel = mongoose.model('Message', messageSchema);
 
-// Cloudinary configuration
-const isCloudinaryConfigured = !!(
-  process.env.CLOUDINARY_CLOUD_NAME &&
-  process.env.CLOUDINARY_API_KEY &&
-  process.env.CLOUDINARY_API_SECRET
-);
-
-if (isCloudinaryConfigured) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-  console.log('Cloudinary successfully initialized');
-} else {
-  console.log('Cloudinary credentials missing. Uploads will fall back to local disk storage');
-}
-
 // Multer Storage Configuration
-const storage = isCloudinaryConfigured
+const storage = process.env.VERCEL
   ? multer.memoryStorage()
   : multer.diskStorage({
       destination: function (req, file, cb) {
@@ -1039,24 +1020,13 @@ app.post('/api/upload', authMiddleware, upload.single('image'), async (req, res)
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Cloudinary upload
-    if (isCloudinaryConfigured) {
-      const uploadPromise = () =>
-        new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            { folder: 'portfolio_arnob' },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          );
-          uploadStream.end(req.file.buffer);
-        });
-
-      const result = await uploadPromise();
+    // Vercel / Memory storage fallback: Convert to Base64 Data URL (saves directly inside MongoDB)
+    if (process.env.VERCEL || !req.file.path) {
+      const base64Data = req.file.buffer.toString('base64');
+      const dataUrl = `data:${req.file.mimetype};base64,${base64Data}`;
       return res.json({
         success: true,
-        url: result.secure_url,
+        url: dataUrl,
       });
     }
 
@@ -1068,7 +1038,7 @@ app.post('/api/upload', authMiddleware, upload.single('image'), async (req, res)
     });
   } catch (error) {
     console.error('Upload error:', error);
-    res.status(500).json({ error: error.message || 'Image upload failed' });
+    res.status(500).json({ error: error.message || 'Upload failed' });
   }
 });
 

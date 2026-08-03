@@ -1,7 +1,7 @@
 {
   "name": "portfolio-server",
   "version": "1.0.0",
-  "description": "Backend API for Md Sarafat Alam Mozumder's Portfolio",
+  "description": "Backend API for Arnob's Portfolio",
   "main": "index.js",
   "type": "module",
   "scripts": {

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sarafat.pages.dev/sitemap.xml
+Sitemap: https://arnob-ewu.vercel.app/sitemap.xml

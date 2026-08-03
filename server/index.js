@@ -171,7 +171,8 @@ app.use(
   })
 );
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '15mb' }));
+app.use(bodyParser.urlencoded({ limit: '15mb', extended: true }));
 
 // Serve backend static files (like public images and local uploads)
 app.use(express.static(path.join(__dirname, 'public')));

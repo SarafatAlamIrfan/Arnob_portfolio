@@ -86,6 +86,10 @@ export default function Portfolio({ projects, profile, projectCategories = ['Sof
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="portfolio-grid">
             {filteredProjects.map((project, index) => {
               const isGithub = project.link && project.link.includes('github.com');
+              const CardWrapper = project.link ? 'a' : 'div';
+              const wrapperProps = project.link
+                ? { href: project.link, target: '_blank', rel: 'noopener noreferrer' }
+                : {};
               return (
                 <div
                   key={project.id}
@@ -93,10 +97,8 @@ export default function Portfolio({ projects, profile, projectCategories = ['Sof
                   className="project-card reveal active transition-all duration-300 transform scale-100 opacity-100"
                   data-category={project.category}
                 >
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <CardWrapper
+                    {...wrapperProps}
                     className="block h-full glass-card bg-white/60 dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden group flex flex-col shadow-lg dark:shadow-none"
                   >
                     <div className="relative h-56 overflow-hidden">
@@ -124,16 +126,18 @@ export default function Portfolio({ projects, profile, projectCategories = ['Sof
                       <p className="text-gray-600 dark:text-gray-400 text-sm mb-6 flex-grow font-light">
                         {project.description}
                       </p>
-                      <div className="flex justify-between items-center text-sm font-semibold text-gray-900 dark:text-white">
-                        <span>{project.linkLabel}</span>
-                        {isGithub ? (
-                          <i className="fa-brands fa-github text-gray-500 group-hover:text-brand-600 dark:group-hover:text-white text-lg transition-colors"></i>
-                        ) : (
-                          <i className="fa-solid fa-arrow-up-right-from-square text-gray-500 group-hover:text-brand-600 dark:group-hover:text-white transition-colors"></i>
-                        )}
-                      </div>
+                      {project.link && (
+                        <div className="flex justify-between items-center text-sm font-semibold text-gray-900 dark:text-white">
+                          <span>{project.linkLabel}</span>
+                          {isGithub ? (
+                            <i className="fa-brands fa-github text-gray-500 group-hover:text-brand-600 dark:group-hover:text-white text-lg transition-colors"></i>
+                          ) : (
+                            <i className="fa-solid fa-arrow-up-right-from-square text-gray-500 group-hover:text-brand-600 dark:group-hover:text-white transition-colors"></i>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </a>
+                  </CardWrapper>
                 </div>
               );
             })}

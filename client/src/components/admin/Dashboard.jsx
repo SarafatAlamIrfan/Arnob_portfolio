@@ -1315,7 +1315,6 @@ export default function Dashboard({ token, onLogout }) {
                         ? setEditingProject({ ...editingProject, link: e.target.value })
                         : setNewProject({ ...newProject, link: e.target.value })}
                       className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                      required
                       placeholder="https://github.com/..."
                     />
                   </div>
@@ -1328,7 +1327,6 @@ export default function Dashboard({ token, onLogout }) {
                         ? setEditingProject({ ...editingProject, linkLabel: e.target.value })
                         : setNewProject({ ...newProject, linkLabel: e.target.value })}
                       className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-purple-500"
-                      required
                       placeholder="e.g. View Source on GitHub"
                     />
                   </div>

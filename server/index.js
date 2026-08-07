@@ -435,6 +435,9 @@ app.get('/api/debug-db', (req, res) => {
 // Combined portfolio data endpoint to load page blazingly fast in a single serverless invocation
 app.get('/api/portfolio-data', async (req, res) => {
   try {
+    // Enable Vercel Edge Caching to bypass MongoDB replica-set roundtrips on subsequent requests
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
+
     const isMongo = isMongoActive();
     const [profile, skills, projects, achievements, education, experience] = await Promise.all([
       fetchProfileData(),

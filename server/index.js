@@ -97,6 +97,7 @@ const educationSchema = new mongoose.Schema({
   institution: String,
   timeline: String,
   details: String,
+  order: { type: Number, default: 0 },
 });
 const EducationModel = mongoose.model('Education', educationSchema);
 
@@ -106,6 +107,7 @@ const experienceSchema = new mongoose.Schema({
   company: String,
   timeline: String,
   details: String,
+  order: { type: Number, default: 0 },
 });
 const ExperienceModel = mongoose.model('Experience', experienceSchema);
 
@@ -271,22 +273,31 @@ const seedDatabase = async () => {
   }
 };
 
-let isConnected = false;
+let cachedPromise = null;
 
 const connectDb = async () => {
-  if (isConnected || mongoose.connection.readyState === 1) {
-    return;
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
   }
   
   if (!process.env.MONGODB_URI) {
-    return;
+    return null;
   }
   
-  console.log('Connecting to MongoDB Atlas...');
-  await mongoose.connect(process.env.MONGODB_URI);
-  isConnected = true;
-  console.log('Successfully connected to MongoDB Atlas');
-  await seedDatabase();
+  if (!cachedPromise) {
+    console.log('Connecting to MongoDB Atlas...');
+    cachedPromise = mongoose.connect(process.env.MONGODB_URI).then(async (m) => {
+      console.log('Successfully connected to MongoDB Atlas');
+      await seedDatabase();
+      return m;
+    }).catch(err => {
+      console.error('Error connecting to MongoDB Atlas:', err);
+      cachedPromise = null;
+      throw err;
+    });
+  }
+  
+  return cachedPromise;
 };
 
 // Express database middleware to ensure connection on Vercel serverless functions
@@ -704,13 +715,49 @@ app.delete('/api/skills/:id', authMiddleware, async (req, res) => {
 app.get('/api/education', async (req, res) => {
   try {
     if (isMongoActive()) {
-      const education = await EducationModel.find();
+      const education = await EducationModel.find().sort({ order: 1 });
       return res.json(education);
     }
     const education = await readJsonFile('education.json', []);
+    education.sort((a, b) => (a.order || 0) - (b.order || 0));
     res.json(education);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch education' });
+  }
+});
+
+app.put('/api/education/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: 'Invalid payload: ids must be an array' });
+    }
+
+    if (isMongoActive()) {
+      const ops = ids.map((id, index) => ({
+        updateOne: {
+          filter: { id },
+          update: { order: index },
+        }
+      }));
+      await EducationModel.bulkWrite(ops);
+      const education = await EducationModel.find().sort({ order: 1 });
+      return res.json(education);
+    } else {
+      const education = await readJsonFile('education.json', []);
+      education.forEach(edu => {
+        const idx = ids.indexOf(edu.id);
+        if (idx !== -1) {
+          edu.order = idx;
+        }
+      });
+      education.sort((a, b) => (a.order || 0) - (b.order || 0));
+      await writeJsonFile('education.json', education);
+      return res.json(education);
+    }
+  } catch (error) {
+    console.error('Reorder education error:', error);
+    res.status(500).json({ error: 'Failed to reorder education' });
   }
 });
 
@@ -720,9 +767,21 @@ app.post('/api/education', authMiddleware, async (req, res) => {
     delete cleanData._id;
     delete cleanData.__v;
 
+    let order = 0;
+    if (isMongoActive()) {
+      const items = await EducationModel.find().select('order');
+      const minOrder = items.reduce((min, item) => (item.order !== undefined && item.order < min) ? item.order : min, 0);
+      order = minOrder - 1;
+    } else {
+      const items = await readJsonFile('education.json', []);
+      const minOrder = items.reduce((min, item) => (item.order !== undefined && item.order < min) ? item.order : min, 0);
+      order = minOrder - 1;
+    }
+
     const newEdu = {
       id: 'e_' + Date.now(),
       ...cleanData,
+      order,
     };
 
     if (isMongoActive()) {
@@ -732,7 +791,7 @@ app.post('/api/education', authMiddleware, async (req, res) => {
     }
 
     const education = await readJsonFile('education.json', []);
-    education.push(newEdu);
+    education.unshift(newEdu);
     await writeJsonFile('education.json', education);
     res.status(201).json(newEdu);
   } catch (error) {
@@ -786,13 +845,49 @@ app.delete('/api/education/:id', authMiddleware, async (req, res) => {
 app.get('/api/experience', async (req, res) => {
   try {
     if (isMongoActive()) {
-      const experience = await ExperienceModel.find();
+      const experience = await ExperienceModel.find().sort({ order: 1 });
       return res.json(experience);
     }
     const experience = await readJsonFile('experience.json', []);
+    experience.sort((a, b) => (a.order || 0) - (b.order || 0));
     res.json(experience);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch experience' });
+  }
+});
+
+app.put('/api/experience/reorder', authMiddleware, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: 'Invalid payload: ids must be an array' });
+    }
+
+    if (isMongoActive()) {
+      const ops = ids.map((id, index) => ({
+        updateOne: {
+          filter: { id },
+          update: { order: index },
+        }
+      }));
+      await ExperienceModel.bulkWrite(ops);
+      const experience = await ExperienceModel.find().sort({ order: 1 });
+      return res.json(experience);
+    } else {
+      const experience = await readJsonFile('experience.json', []);
+      experience.forEach(exp => {
+        const idx = ids.indexOf(exp.id);
+        if (idx !== -1) {
+          exp.order = idx;
+        }
+      });
+      experience.sort((a, b) => (a.order || 0) - (b.order || 0));
+      await writeJsonFile('experience.json', experience);
+      return res.json(experience);
+    }
+  } catch (error) {
+    console.error('Reorder experience error:', error);
+    res.status(500).json({ error: 'Failed to reorder experience' });
   }
 });
 
@@ -802,9 +897,21 @@ app.post('/api/experience', authMiddleware, async (req, res) => {
     delete cleanData._id;
     delete cleanData.__v;
 
+    let order = 0;
+    if (isMongoActive()) {
+      const items = await ExperienceModel.find().select('order');
+      const minOrder = items.reduce((min, item) => (item.order !== undefined && item.order < min) ? item.order : min, 0);
+      order = minOrder - 1;
+    } else {
+      const items = await readJsonFile('experience.json', []);
+      const minOrder = items.reduce((min, item) => (item.order !== undefined && item.order < min) ? item.order : min, 0);
+      order = minOrder - 1;
+    }
+
     const newExp = {
       id: 'ex_' + Date.now(),
       ...cleanData,
+      order,
     };
 
     if (isMongoActive()) {
@@ -814,7 +921,7 @@ app.post('/api/experience', authMiddleware, async (req, res) => {
     }
 
     const experience = await readJsonFile('experience.json', []);
-    experience.push(newExp);
+    experience.unshift(newExp);
     await writeJsonFile('experience.json', experience);
     res.status(201).json(newExp);
   } catch (error) {

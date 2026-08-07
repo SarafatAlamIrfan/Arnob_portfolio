@@ -2,6 +2,41 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
+const convertToWebP = (file) => {
+  return new Promise((resolve, reject) => {
+    // Only convert raster static images, skip vectors (svg) and animations (gif)
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
+      resolve(file);
+      return;
+    }
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          resolve(file);
+          return;
+        }
+        const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        const newFile = new File([blob], `${nameWithoutExt}.webp`, {
+          type: 'image/webp',
+          lastModified: Date.now()
+        });
+        resolve(newFile);
+      }, 'image/webp', 0.85);
+    };
+    img.onerror = (err) => {
+      console.error('Image load error during WebP conversion:', err);
+      resolve(file);
+    };
+  });
+};
+
 export default function Dashboard({ token, onLogout }) {
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(false);
@@ -22,6 +57,10 @@ export default function Dashboard({ token, onLogout }) {
   const [editingSkill, setEditingSkill] = useState(null);
   const [editingEdu, setEditingEdu] = useState(null);
   const [editingExp, setEditingExp] = useState(null);
+
+  // Drag and Drop States for Education & Experience Reordering
+  const [draggedEduIndex, setDraggedEduIndex] = useState(null);
+  const [draggedExpIndex, setDraggedExpIndex] = useState(null);
 
   // New item modal/form states
   const [newProject, setNewProject] = useState({ title: '', description: '', category: 'Software', link: '', linkLabel: 'View Project', image: '' });
@@ -127,15 +166,17 @@ export default function Dashboard({ token, onLogout }) {
 
   // Image Upload Helper
   const handleImageUpload = async (e, onUploadSuccess) => {
-    const file = e.target.files[0];
+    let file = e.target.files[0];
     if (!file) return;
-
-    const formData = new FormData();
-    formData.append('image', file);
 
     setUploadingField(e.target.name || 'file');
 
     try {
+      file = await convertToWebP(file);
+
+      const formData = new FormData();
+      formData.append('image', file);
+
       const res = await fetch(`${API_BASE}/api/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -430,7 +471,7 @@ export default function Dashboard({ token, onLogout }) {
 
       if (res.ok) {
         const added = await res.json();
-        setEducation([...education, added]);
+        setEducation([added, ...education]);
         setNewEdu({ degree: '', institution: '', timeline: '', details: '' });
         showStatus('success', 'Education entry added!');
       } else {
@@ -505,7 +546,7 @@ export default function Dashboard({ token, onLogout }) {
 
       if (res.ok) {
         const added = await res.json();
-        setExperience([...experience, added]);
+        setExperience([added, ...experience]);
         setNewExp({ role: '', company: '', timeline: '', details: '' });
         showStatus('success', 'Experience entry added!');
       } else {
@@ -563,6 +604,85 @@ export default function Dashboard({ token, onLogout }) {
     } catch (err) {
       console.error(err);
       showStatus('error', 'Failed to delete experience');
+    }
+  };
+
+  // Drag and Drop reordering handlers
+  const handleEduDragStart = (index) => {
+    setDraggedEduIndex(index);
+  };
+
+  const handleEduDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedEduIndex === null || draggedEduIndex === index) return;
+    const updated = [...education];
+    const draggedItem = updated[draggedEduIndex];
+    updated.splice(draggedEduIndex, 1);
+    updated.splice(index, 0, draggedItem);
+    setDraggedEduIndex(index);
+    setEducation(updated);
+  };
+
+  const handleEduDragEnd = async () => {
+    setDraggedEduIndex(null);
+    try {
+      const ids = education.map(e => e.id);
+      const res = await fetch(`${API_BASE}/api/education/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids }),
+      });
+      if (res.ok) {
+        const sorted = await res.json();
+        setEducation(sorted);
+      } else {
+        showStatus('error', 'Failed to save education order to database');
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus('error', 'Failed to reorder education items');
+    }
+  };
+
+  const handleExpDragStart = (index) => {
+    setDraggedExpIndex(index);
+  };
+
+  const handleExpDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedExpIndex === null || draggedExpIndex === index) return;
+    const updated = [...experience];
+    const draggedItem = updated[draggedExpIndex];
+    updated.splice(draggedExpIndex, 1);
+    updated.splice(index, 0, draggedItem);
+    setDraggedExpIndex(index);
+    setExperience(updated);
+  };
+
+  const handleExpDragEnd = async () => {
+    setDraggedExpIndex(null);
+    try {
+      const ids = experience.map(e => e.id);
+      const res = await fetch(`${API_BASE}/api/experience/reorder`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids }),
+      });
+      if (res.ok) {
+        const sorted = await res.json();
+        setExperience(sorted);
+      } else {
+        showStatus('error', 'Failed to save experience order to database');
+      }
+    } catch (err) {
+      console.error(err);
+      showStatus('error', 'Failed to reorder experience items');
     }
   };
 
@@ -727,6 +847,17 @@ export default function Dashboard({ token, onLogout }) {
         {/* --- TAB 1: PROFILE INFO --- */}
         {activeTab === 'profile' && (
           <form onSubmit={handleSaveProfile} className="space-y-8">
+            {/* Warning Banner */}
+            <div className="p-4 bg-purple-950/40 border border-purple-800/80 rounded-2xl flex items-start gap-3">
+              <i className="fa-solid fa-circle-info text-purple-400 text-lg mt-0.5 shrink-0"></i>
+              <div>
+                <h4 className="font-bold text-white text-sm">Image & Document Size Guide</h4>
+                <p className="text-purple-300 text-xs mt-1 leading-relaxed">
+                  To ensure successful profile updates and maintain fast page loads under Vercel's 4.5MB payload limit, please compress/resize images and PDFs to under <strong>1.5MB (ideally under 500KB)</strong> before uploading.
+                </p>
+              </div>
+            </div>
+
             <div className="glass-card bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-6">
               <h3 className="text-xl font-bold text-white mb-4 border-b border-slate-800 pb-3 flex items-center gap-3">
                 <i className="fa-solid fa-id-card text-purple-500"></i> Hero Section Settings
@@ -1817,19 +1948,33 @@ export default function Dashboard({ token, onLogout }) {
               {/* Education list */}
               <div className="space-y-3">
                 <h4 className="font-bold text-lg text-white">Education History</h4>
-                {education.map((edu) => (
-                  <div key={edu.id} className="flex justify-between items-start p-4 bg-slate-900 border border-slate-800 rounded-2xl">
-                    <div>
-                      <h5 className="font-bold text-white text-base leading-snug">{edu.degree}</h5>
-                      <p className="text-purple-400 text-xs font-medium mt-1">{edu.institution} • {edu.timeline}</p>
-                      {edu.details && <p className="text-slate-400 text-xs mt-2 font-light leading-relaxed">{edu.details}</p>}
+                {education.map((edu, index) => (
+                  <div
+                    key={edu.id}
+                    draggable
+                    onDragStart={() => handleEduDragStart(index)}
+                    onDragOver={(e) => handleEduDragOver(e, index)}
+                    onDragEnd={handleEduDragEnd}
+                    className={`flex justify-between items-start p-4 bg-slate-900 border rounded-2xl transition-all cursor-move ${
+                      draggedEduIndex === index ? 'border-purple-500 opacity-50' : 'border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <div className="mr-3 cursor-grab text-slate-500 hover:text-purple-400 shrink-0">
+                        <i className="fa-solid fa-grip-vertical"></i>
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-white text-base leading-snug">{edu.degree}</h5>
+                        <p className="text-purple-400 text-xs font-medium mt-1">{edu.institution} • {edu.timeline}</p>
+                        {edu.details && <p className="text-slate-400 text-xs mt-2 font-light leading-relaxed">{edu.details}</p>}
+                      </div>
                     </div>
                     <div className="flex gap-2">
                        <button onClick={() => {
                          setEditingEdu(edu);
                          document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
-                       }} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-pencil"></i></button>
-                      <button onClick={() => handleDeleteEdu(edu.id)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-trash"></i></button>
+                       }} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs flex items-center justify-center w-8 h-8"><i className="fa-solid fa-pencil"></i></button>
+                      <button onClick={() => handleDeleteEdu(edu.id)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-xs flex items-center justify-center w-8 h-8"><i className="fa-solid fa-trash"></i></button>
                     </div>
                   </div>
                 ))}
@@ -1925,19 +2070,33 @@ export default function Dashboard({ token, onLogout }) {
               {/* Experience list */}
               <div className="space-y-3">
                 <h4 className="font-bold text-lg text-white">Experience Timeline</h4>
-                {experience.map((exp) => (
-                  <div key={exp.id} className="flex justify-between items-start p-4 bg-slate-900 border border-slate-800 rounded-2xl">
-                    <div>
-                      <h5 className="font-bold text-white text-base leading-snug">{exp.role}</h5>
-                      <p className="text-pink-400 text-xs font-medium mt-1">{exp.company} • {exp.timeline}</p>
-                      <p className="text-slate-400 text-xs mt-2 font-light leading-relaxed">{exp.details}</p>
+                {experience.map((exp, index) => (
+                  <div
+                    key={exp.id}
+                    draggable
+                    onDragStart={() => handleExpDragStart(index)}
+                    onDragOver={(e) => handleExpDragOver(e, index)}
+                    onDragEnd={handleExpDragEnd}
+                    className={`flex justify-between items-start p-4 bg-slate-900 border rounded-2xl transition-all cursor-move ${
+                      draggedExpIndex === index ? 'border-purple-500 opacity-50' : 'border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <div className="mr-3 cursor-grab text-slate-500 hover:text-purple-400 shrink-0">
+                        <i className="fa-solid fa-grip-vertical"></i>
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-white text-base leading-snug">{exp.role}</h5>
+                        <p className="text-pink-400 text-xs font-medium mt-1">{exp.company} • {exp.timeline}</p>
+                        {exp.details && <p className="text-slate-400 text-xs mt-2 font-light leading-relaxed">{exp.details}</p>}
+                      </div>
                     </div>
                     <div className="flex gap-2">
                        <button onClick={() => {
                          setEditingExp(exp);
                          document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
-                       }} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-pencil"></i></button>
-                      <button onClick={() => handleDeleteExp(exp.id)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-xs"><i className="fa-solid fa-trash"></i></button>
+                       }} className="p-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all text-xs flex items-center justify-center w-8 h-8"><i className="fa-solid fa-pencil"></i></button>
+                      <button onClick={() => handleDeleteExp(exp.id)} className="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-xs flex items-center justify-center w-8 h-8"><i className="fa-solid fa-trash"></i></button>
                     </div>
                   </div>
                 ))}

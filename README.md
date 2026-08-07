@@ -91,15 +91,35 @@ npm run dev
 
 ---
 
-## ☁️ Production Deployment (Vercel)
+## ☁️ Production Deployment (Vercel & MongoDB Atlas)
 
-The codebase is fully optimized for **Vercel Serverless Functions**.
+The codebase is fully optimized for **Vercel Serverless Functions**. Follow these step-by-step phases to deploy it successfully:
 
-### Environment Variables
-Configure the following keys in your **Vercel Project Settings > Environment Variables**:
-1. `MONGODB_URI`: Your MongoDB Atlas URI.
-2. `JWT_SECRET`: A secure string for admin JWT tokens.
-3. `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: Media storage tokens.
-4. `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `RECEIVER_EMAIL`: Contact mail SMTP parameters.
+### Phase 1: Create a Free MongoDB Atlas Database
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and register a free account.
+2. Create a new project, click **Build a Database**, and select the **M0 (Free)** sandbox tier.
+3. Choose a cloud provider and region nearest to you, then click **Create**.
+4. **Set Security Credentials**: Create a database user and copy down the **Username** and **Password**.
+5. **Configure Network Access**:
+   * In the left sidebar under *Security*, click **Network Access**.
+   * Click **Add IP Address**, then click **Allow Access from Anywhere** (which adds `0.0.0.0/0`). This is essential because Vercel's serverless functions rotate IP addresses dynamically and will otherwise be blocked from connecting to your database. Click **Confirm**.
+6. **Get Your Connection String**:
+   * Go to *Database* in the sidebar and click **Connect** next to your cluster.
+   * Select **Drivers** (Node.js).
+   * Copy the connection string and replace `<username>` and `<password>` with your database user credentials.
 
-*Note: Since the serverless environment has a read-only filesystem, the portfolio will automatically block local file operations and prompt you if the database connection goes offline.*
+### Phase 2: Deploy to Vercel
+1. Upload your codebase to your private or public GitHub repository.
+2. Log in to [Vercel](https://vercel.com) using your GitHub account.
+3. Click **Add New > Project**, find your repository in the list, and click **Import**.
+4. Keep the **Build and Output Settings** at their default Vite/Node.js presets.
+5. Expand the **Environment Variables** section and configure these key-value pairs:
+   * `MONGODB_URI`: *Your MongoDB Atlas connection string.*
+   * `JWT_SECRET`: *A secure random string of characters for admin session tokens.*
+   * `ADMIN_USERNAME`: *The admin panel login username.*
+   * `ADMIN_PASSWORD`: *The admin panel login password.*
+   * `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: *(Optional) For media storage uploads.*
+   * `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `RECEIVER_EMAIL`: *(Optional) For email notifications.*
+6. Click **Deploy**. Vercel will build the frontend and host your API routes on serverless middleware.
+
+*Note: Since the serverless environment has a read-only filesystem, local file database operations are blocked on Vercel, and configuring MONGODB_URI is required for production data editing.*

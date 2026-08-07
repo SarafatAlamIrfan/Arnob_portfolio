@@ -274,6 +274,9 @@ const seedDatabase = async () => {
 };
 
 let cachedPromise = null;
+let lastConnectionError = null;
+let lastConnectAttempt = 0;
+const COOLDOWN_MS = 20000; // 20 seconds cooldown
 
 const connectDb = async () => {
   if (mongoose.connection.readyState === 1) {
@@ -284,14 +287,22 @@ const connectDb = async () => {
     return null;
   }
   
+  const now = Date.now();
+  if (now - lastConnectAttempt < COOLDOWN_MS) {
+    return null; // Skip attempt during cooldown to prevent blocking requests
+  }
+  
   if (!cachedPromise) {
     console.log('Connecting to MongoDB Atlas...');
+    lastConnectAttempt = now;
     cachedPromise = mongoose.connect(process.env.MONGODB_URI).then(async (m) => {
       console.log('Successfully connected to MongoDB Atlas');
       await seedDatabase();
+      lastConnectionError = null;
       return m;
     }).catch(err => {
       console.error('Error connecting to MongoDB Atlas:', err);
+      lastConnectionError = err.message || err.toString();
       cachedPromise = null;
       throw err;
     });
@@ -416,7 +427,8 @@ app.get('/api/debug-db', (req, res) => {
     hasMongoUri: !!process.env.MONGODB_URI,
     readyState: mongoose.connection.readyState,
     isVercel: !!process.env.VERCEL,
-    isMongoActive: isMongoActive()
+    isMongoActive: isMongoActive(),
+    connectionError: lastConnectionError
   });
 });
 

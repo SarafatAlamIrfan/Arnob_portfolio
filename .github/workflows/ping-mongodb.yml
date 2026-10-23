@@ -1,0 +1,43 @@
+name: Ping MongoDB (2x Daily Keep-Alive)
+
+on:
+  schedule:
+    # Runs twice a day at 00:00 and 12:00 UTC (every 12 hours)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Deployed Portfolio API
+        run: |
+          TARGET_URL="${{ secrets.PORTFOLIO_URL }}"
+          if [ -z "$TARGET_URL" ]; then
+            TARGET_URL="https://arnob-ewu.vercel.app"
+          fi
+          echo "Sending ping to $TARGET_URL/api/ping..."
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "$TARGET_URL/api/ping" || true)
+          echo "$RESPONSE"
+
+      - name: Checkout repository (Fallback Direct MongoDB Ping)
+        if: env.MONGODB_URI != ''
+        uses: actions/checkout@v4
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+
+      - name: Setup Node.js (Fallback Direct MongoDB Ping)
+        if: env.MONGODB_URI != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+
+      - name: Direct MongoDB Ping
+        if: env.MONGODB_URI != ''
+        run: |
+          npm --prefix server install --omit=dev
+          node server/ping.js
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}

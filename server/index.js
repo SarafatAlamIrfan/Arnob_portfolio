@@ -324,6 +324,71 @@ app.use(async (req, res, next) => {
 
 const isMongoActive = () => !!process.env.MONGODB_URI && mongoose.connection.readyState === 1;
 
+// --- HEALTH & MONGODB PING ENDPOINT ---
+// Allows external cron jobs, Vercel crons, or uptime monitors to ping MongoDB
+app.get('/api/ping', async (req, res) => {
+  try {
+    const startTime = Date.now();
+    let dbStatus = 'disconnected';
+    let pingResult = null;
+
+    if (process.env.MONGODB_URI) {
+      await connectDb();
+      if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+        pingResult = await mongoose.connection.db.command({ ping: 1 });
+        dbStatus = 'connected';
+      } else {
+        dbStatus = `state_${mongoose.connection.readyState}`;
+      }
+    } else {
+      dbStatus = 'local-json-mode';
+    }
+
+    const latencyMs = Date.now() - startTime;
+    return res.status(200).json({
+      success: true,
+      status: 'ok',
+      database: dbStatus,
+      latencyMs,
+      timestamp: new Date().toISOString(),
+      ping: pingResult,
+    });
+  } catch (error) {
+    console.error('Ping check error:', error);
+    return res.status(500).json({
+      success: false,
+      status: 'error',
+      error: error.message || 'Database ping failed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+// --- SCHEDULED MONGODB PING (Twice a day - every 12 hours) ---
+// For long-running Node processes (VPS / Render / local development)
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+
+const pingMongoDatabase = async () => {
+  try {
+    if (!process.env.MONGODB_URI) return;
+    await connectDb();
+    if (mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      const result = await mongoose.connection.db.command({ ping: 1 });
+      console.log(`[${new Date().toISOString()}] MongoDB ping successful (2x/day keep-alive):`, result);
+    }
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] Scheduled MongoDB ping failed:`, err.message);
+  }
+};
+
+if (!process.env.VERCEL) {
+  // First ping 10 seconds after server launch, then repeats every 12 hours (2x a day)
+  setTimeout(() => {
+    pingMongoDatabase();
+    setInterval(pingMongoDatabase, TWELVE_HOURS_MS);
+  }, 10000);
+}
+
 // Admin authentication middleware
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_arnob_portfolio';
 

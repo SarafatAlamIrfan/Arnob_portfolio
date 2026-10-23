@@ -123,3 +123,22 @@ The codebase is fully optimized for **Vercel Serverless Functions**. Follow thes
 6. Click **Deploy**. Vercel will build the frontend and host your API routes on serverless middleware.
 
 *Note: Since the serverless environment has a read-only filesystem, local file database operations are blocked on Vercel, and configuring MONGODB_URI is required for production data editing.*
+
+
+---
+
+## ⏰ MongoDB Keep-Alive (2x Daily Ping)
+
+To prevent free-tier MongoDB Atlas clusters from becoming dormant or pausing due to inactivity, the portfolio includes a 3-layer automated ping system scheduled **2 times a day** (every 12 hours at `00:00` and `12:00 UTC`):
+
+1. **Vercel Cron (`vercel.json`)**:
+   Automatically pings `/api/ping` once daily at midnight UTC via Vercel's built-in cron scheduler (compatible with Vercel Hobby plan).
+2. **GitHub Actions Workflow (`.github/workflows/ping-mongodb.yml`)**:
+   A scheduled GitHub Actions workflow that runs every 12 hours to hit `/api/ping` (or runs `server/ping.js` if `MONGODB_URI` secret is set).
+3. **In-Process Interval (`server/index.js`)**:
+   When running as a long-lived Node.js server (e.g. Render, Railway, VPS, or local development), it automatically executes a MongoDB ping command every 12 hours.
+4. **Manual CLI Ping**:
+   You can trigger an immediate database ping at any time by running:
+   ```bash
+   npm run ping:db
+   ```

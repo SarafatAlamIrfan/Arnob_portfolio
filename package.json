@@ -11,7 +11,8 @@
     "backend": "npm run server",
     "client": "npm run dev --prefix client",
     "frontend": "npm run client",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "ping:db": "node server/ping.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
